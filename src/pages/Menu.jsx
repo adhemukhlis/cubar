@@ -6,22 +6,21 @@ import { IcRegularSwords } from '@/src/styles/react-icon-svg'
 import ControlMenu from '@/src/components/ControlMenu'
 import DrawerMenu from '@/src/components/DrawerMenu'
 import { Avatar, Button, Drawer } from 'antd'
-import { useStore } from 'react-redux'
+import { useDispatch, useStore } from 'react-redux'
 import USER_GETTERS from '@/src/store/modules/User/getters'
 import { MoreOutlined } from '@ant-design/icons'
+import AUTH_ACTIONS from '@/src/store/modules/Auth/actions'
+import ACTION_TYPES from '@/src/store/types/action-types'
 
 const Menu = () => {
 	const store = useStore()
 	const state = store.getState()
 	const username = USER_GETTERS.username(state)
 	const imageProfile = USER_GETTERS.imageProfile(state)
-	const [drawerVisible, setDrawerVisible] = useState(false)
-
-	const showDrawer = () => {
-		setDrawerVisible(true)
-	}
-	const onClose = () => {
-		setDrawerVisible(false)
+	const dispatch = useDispatch()
+	const authLogout = () => dispatch(AUTH_ACTIONS[ACTION_TYPES.AUTH_LOGOUT]())
+	const logoutHandler = () => {
+		authLogout()
 	}
 	return (
 		<div
@@ -30,7 +29,7 @@ const Menu = () => {
 				flexDirection: 'column'
 			}}>
 			<div style={ProfileContainer}>
-				<Button style={{ position: 'absolute', top: '4vw', right: '4vw' }}>
+				<Button style={{ position: 'absolute', top: '4vw', right: '4vw' }} onClick={logoutHandler}>
 					Logout
 				</Button>
 
@@ -41,20 +40,7 @@ const Menu = () => {
 				<ControlMenu text="Main Bareng" to={URLS.MULTIPLAYER}>
 					<IcRegularSwords fill="rgba(0, 0, 0, 0.6)" height="10vw" />
 				</ControlMenu>
-				{/* <ControlMenu
-          text="Main Sendiri"
-          to={getState("_globalUtoken") === "guest" ? "/#" : PATH.singleplayer}
-        >
-          <IcRegularSword fill="rgba(0, 0, 0, 0.6)" height="10vw" />
-        </ControlMenu> */}
-				{/* <ControlMenu text="Latihan" to={PATH.training}>
-					<IcRegularCrosshairs fill="rgba(0, 0, 0, 0.6)" height="10vw" />
-				</ControlMenu> */}
-				{/* <ControlMenu text="Leaderboard" to={PRIVATE_ROUTE.LEADERBOARD}>
-					<IcRegularCrown fill="rgba(0, 0, 0, 0.6)" height="10vw" />
-				</ControlMenu> */}
 			</div>
-			{/* <DrawerMenu title="Menu" placement="bottom" closable={false} onClose={onClose} open={true} /> */}
 		</div>
 	)
 }

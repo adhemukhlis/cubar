@@ -6,6 +6,8 @@ import { firebaseRefUserToken } from '@/src/firebase-instance/firebaseRef'
 import URLS from '@/src/enums/urls'
 import AUTH_GETTERS from './getters'
 import navigateTo from '@/src/utils/navigateTo'
+import { googleLogout } from '@react-oauth/google';
+import { Store_OffLogin } from '@/src/firebase-instance/firebaseActions'
 
 /**
  * berisi perintah untuk integrasi ke backend rest api
@@ -13,8 +15,6 @@ import navigateTo from '@/src/utils/navigateTo'
 export default {
 	[ACTION_TYPES.AUTH_LOGIN]({ userData }) {
 		const { uid, utoken, username, email, imageProfile } = userData
-
-		// auth login ke api
 		return async (dispatch, state) => {
 			dispatch({
 				type: REDUCER_TYPES.AUTH_LOGIN,
@@ -32,12 +32,14 @@ export default {
 					const userDataAuth = {
 						email,
 						name: username,
-						imageProfile
+						imageProfile,
+						uid
 					}
 					const userDataResponse = {
 						email: _email,
 						name: _name,
-						imageProfile: _imageProfile
+						imageProfile: _imageProfile,
+						uid
 					}
 					const isUserDataEqual = isEqual(userDataAuth, userDataResponse)
 					if (_status === 200) {
@@ -48,39 +50,42 @@ export default {
 								utoken,
 								...(!isUserDataEqual ? userDataAuth : {})
 							}
-						}).then(() => {
-							firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
-								if (tokenSnapshoot.val() !== utoken) {
-									console.log('User Token Changed!')
-									dispatch({
-										type: REDUCER_TYPES.AUTH_LOGIN
-									})
-									dispatch({
-										type: REDUCER_TYPES.USER_USER_DATA
-									})
-									navigateTo(URLS.LOGIN)
-								}
-							})
-							dispatch({
-								type: REDUCER_TYPES.USER_USER_DATA,
-								uid: uid,
-								username: username,
-								email: email,
-								imageProfile: imageProfile
-							})
-							dispatch({
-								type: REDUCER_TYPES.AUTH_LOGIN,
-								utoken,
-								uid
-							})
-							navigateTo(URLS.MENU)
-							resolve({ status: 200 })
-						}).finally(()=>{
-							dispatch({
-								type: REDUCER_TYPES.AUTH_LOGIN,
-								isLoading: false
-							})
 						})
+							.then(() => {
+								firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
+									if (tokenSnapshoot.val() !== utoken) {
+										console.log('AUTH_LOGIN tokenSnapshoot.val()', tokenSnapshoot.val())
+										firebaseRefUserToken(uid).off()
+										dispatch({
+											type: REDUCER_TYPES.AUTH_LOGIN
+										})
+										dispatch({
+											type: REDUCER_TYPES.USER_USER_DATA
+										})
+										navigateTo(URLS.LOGIN)
+									}
+								})
+								dispatch({
+									type: REDUCER_TYPES.USER_USER_DATA,
+									uid: uid,
+									username: username,
+									email: email,
+									imageProfile: imageProfile
+								})
+								dispatch({
+									type: REDUCER_TYPES.AUTH_LOGIN,
+									utoken,
+									uid
+								})
+								navigateTo(URLS.MENU)
+								resolve({ status: 200 })
+							})
+							.finally(() => {
+								dispatch({
+									type: REDUCER_TYPES.AUTH_LOGIN,
+									isLoading: false
+								})
+							})
 					}
 				})
 			})
@@ -89,7 +94,7 @@ export default {
 	[ACTION_TYPES.AUTH_CHECK]() {
 		return async (dispatch, state) => {
 			const uid = AUTH_GETTERS.uid(state())
-			const utoken = AUTH_GETTERS.uToken(state())
+			const utoken = AUTH_GETTERS.loginToken(state())
 			dispatch({
 				type: REDUCER_TYPES.AUTH_LOGIN,
 				isLoading: true
@@ -101,12 +106,12 @@ export default {
 							url: `accounts/${uid}.json`
 						}).then((res) => {
 							const _status = get(res, 'status', 500)
+							const _utoken = get(res, 'data.utoken', '')
 							if (_status === 200) {
-								const _utoken = get(res, 'data.utoken', '')
 								if (utoken === _utoken) {
-									// window.location.replace(PRIVATE_ROUTE.DASHBOARD);
 									firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
 										if (tokenSnapshoot.val() !== utoken) {
+											firebaseRefUserToken(uid).off()
 											dispatch({
 												type: REDUCER_TYPES.AUTH_LOGIN
 											})
@@ -114,8 +119,6 @@ export default {
 												type: REDUCER_TYPES.USER_USER_DATA
 											})
 											navigateTo(URLS.LOGIN)
-											// window.location.replace(PUBLIC_ROUTE.LANDING);
-											// firebaseRefUserToken(uid).off()
 										}
 									})
 									dispatch({
@@ -127,6 +130,7 @@ export default {
 									})
 									resolve({ status: 200 })
 								} else {
+									firebaseRefUserToken(uid).off()
 									dispatch({
 										type: REDUCER_TYPES.AUTH_LOGIN
 									})
@@ -136,6 +140,11 @@ export default {
 									resolve({ status: 403 })
 								}
 							}
+						}).finally(() => {
+							dispatch({
+								type: REDUCER_TYPES.AUTH_LOGIN,
+								isLoading: false
+							})
 						})
 				  })
 				: { status: 404 }
@@ -143,13 +152,15 @@ export default {
 	},
 	[ACTION_TYPES.AUTH_LOGOUT]() {
 		return async (dispatch, state) => {
-			dispatch({
-				type: REDUCER_TYPES.AUTH_LOGIN
+			googleLogout();
+			const uid = AUTH_GETTERS.uid(state())
+			ApiService.request({
+				method: 'patch',
+				url: `accounts/${uid}.json`,
+				data: {
+					utoken:'',
+				}
 			})
-			dispatch({
-				type: REDUCER_TYPES.USER_USER_DATA
-			})
-			navigateTo(URLS.LOGIN)
 			return true
 		}
 	}

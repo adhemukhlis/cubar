@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Space, Avatar, Modal, Row, Col, Button, PageHeader } from 'antd'
-import { CaretRightOutlined } from '@ant-design/icons'
-import { firebaseRefRoom, firebaseTimestamp } from 'root/src/firebaseRef/firebaseRef'
-import { useParams, useHistory } from 'react-router-dom'
+import { Table, Space, Avatar, Modal, Row, Col, Button, Tag } from 'antd'
+import { CaretRightOutlined, StarOutlined } from '@ant-design/icons'
+import { firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
+import { useParams } from 'react-router-dom'
 import { useStore } from 'react-redux'
-import 'root/src/styles/hideSelectionColumnTable.css'
-import USER_GETTERS from 'root/src/store/modules/User/getters'
-import Countdown from 'src/game/component/countdown'
-import moment from 'moment'
+import USER_GETTERS from '@/src/store/modules/User/getters'
+import Countdown from '@/src/components/Countdown'
+import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
-import navigateTo from 'root/src/utils/navigateTo'
+import '@/src/styles/hideSelectionColumnTable.css'
+import navigateTo from '@/src/utils/navigateTo'
+import { Store_SetUserLeaveRoom } from '@/src/firebase-instance/firebaseActions'
+const duration = require('dayjs/plugin/duration')
+const relativeTime = require('dayjs/plugin/relativeTime')
+dayjs.extend(relativeTime)
+dayjs.extend(duration)
 let interval
 const Room = () => {
 	const totalWaitingDuration = 12
 	const { id } = useParams()
-	const history = useHistory()
 	const [players, setPlayers] = useState([])
+	const [roomMasterUID, setRoomMasterUID] = useState('')
 	const [gameData, setGameData] = useState({})
 	const [loading, setLoading] = useState(true)
 	const store = useStore()
@@ -31,20 +36,20 @@ const Room = () => {
 				firebaseRefRoom(id)
 					.child('started_at')
 					.once('value', (snap) => {
-						const gameStartAt = moment(snap.val()).add(12000, 'ms').valueOf()
+						const gameStartAt = dayjs(snap.val()).add(12000, 'ms').valueOf()
 						firebaseRefRoom(id).child('game_start_at').set(gameStartAt)
-						console.log('set start game')
 					})
 			})
 	}
 	useEffect(() => {
 		firebaseRefRoom(id).on('value', (snap) => {
 			if (snap.exists()) {
-				const { player, ...other } = snap.val()
+				const { player, room_master, ...other } = snap.val()
+				setRoomMasterUID(room_master)
 				if (!isEqual(other, gameData)) {
 					setGameData(other)
 				}
-				setPlayers(Object.keys(player).map((key) => player[key]))
+				setPlayers(Object.keys(player || {}).map((key) => player[key]))
 			} else {
 				Modal.info({
 					title: 'Room tidak ditemukan!',
@@ -53,7 +58,7 @@ const Room = () => {
 							<p>Room tidak ditemukan!</p>
 						</div>
 					),
-					onOk: () => history.push('/menu')
+					onOk: () => navigateTo('/menu')
 				})
 			}
 			setLoading(false)
@@ -63,6 +68,9 @@ const Room = () => {
 			setRestTime((prev) => (prev += 1))
 		}, 1000)
 		return () => {
+			// on unmount
+			console.log('unmount room', id)
+			Store_SetUserLeaveRoom(UID, roomMasterUID === UID ? 'master' : '', id)
 			firebaseRefRoom(id)
 				.update({ playing: 'false' })
 				.then(() => {
@@ -79,18 +87,17 @@ const Room = () => {
 		var tradeCoolDown = undefined
 		if (gameData.playing === 'true' && gameData?.game_start_at !== undefined) {
 			if (endOfCoolDown === undefined) {
-				const gameStartAt = moment(gameData.game_start_at)
-				console.log(gameStartAt.diff(moment(), 'ms'))
-				const waitTime = (gameStartAt.diff(moment(), 'ms') % 1000) - 1
+				const gameStartAt = dayjs(gameData.game_start_at)
+				const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
 				setTimeout(() => {
 					setEndOfCoolDown(gameStartAt.subtract(waitTime, 'ms'))
 				}, waitTime)
 			} else {
 				tradeCoolDown = setInterval(() => {
-					const secondRemaining = endOfCoolDown.diff(moment(),'s')
+					const secondRemaining = endOfCoolDown.diff(dayjs(), 's')
 					if (secondRemaining < 0) {
 						if (getDuration() > 0) {
-							setEndOfCoolDown(moment().add(getDuration(), 'ms'))
+							setEndOfCoolDown(dayjs().add(getDuration(), 'ms'))
 						} else {
 							clearInterval(tradeCoolDown)
 						}
@@ -104,20 +111,12 @@ const Room = () => {
 		return () => clearInterval(tradeCoolDown)
 	}, [endOfCoolDown, gameData])
 	const getDuration = () => {
-		return moment(gameData.game_start_at).diff(moment(), 'ms')
+		return dayjs(gameData.game_start_at).diff(dayjs(), 'ms')
 	}
 	return (
 		<div>
-			<PageHeader
-    onBack={() => navigateTo('/menu')}
-    title="Room"
-  />
-			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-				{
-					gameData.playing === 'true' && coolDownTime>0 && <Countdown onRest={true} a={coolDownTime||0} b={totalWaitingDuration} />
-				}
-				
-			</div>
+			{roomMasterUID}
+			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>{gameData.playing === 'true' && coolDownTime > 0 && <Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration-2} />}</div>
 			<Table
 				rowKey="uid"
 				loading={loading}
@@ -129,7 +128,16 @@ const Room = () => {
 						render: (value, rowValues, index) => (
 							<Space>
 								<Avatar src={rowValues.imageProfile} />
-								{value}
+								{rowValues.uid === roomMasterUID ? (
+									<>
+										<Tag bordered={false} color="warning">
+											<StarOutlined />
+										</Tag>
+										{value}
+									</>
+								) : (
+									value
+								)}
 							</Space>
 						)
 					}
@@ -140,9 +148,12 @@ const Room = () => {
 					<Row>
 						<Col span={16}>Room : {gameData.roomcode}</Col>
 						<Col span={8}>
-							<Button block icon={<CaretRightOutlined />} onClick={handleStart}>
+							{
+							 UID	=== roomMasterUID && <Button block icon={<CaretRightOutlined />} onClick={handleStart}>
 								Start
 							</Button>
+							}
+							
 						</Col>
 					</Row>
 				)}

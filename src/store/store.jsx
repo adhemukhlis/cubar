@@ -36,7 +36,7 @@ export const Store_UpdateUserToken = (id, token, callback) =>
     },
     (error) => {
       if (error) {
-        
+        //
       } else {
         callback();
       }

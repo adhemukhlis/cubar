@@ -1,26 +1,15 @@
 import React, { useState, useEffect, Fragment } from 'react'
-import { ContainerCenterBasic, IconBlack } from '../config/styles'
-import NavBar from '../component/navbar'
-import { IcRegularSwords } from '../icons/react-icon-svg'
-import { Store_SetUserJoinRoom, Store_SetUserCreateRoom } from 'root/src/game/store/firebaseActions'
-import { Col, Row, Input, PageHeader, Space, Form, Divider, Button } from 'antd'
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons'
-import Loader from 'src/game/component/loader'
+import { Store_SetUserJoinRoom, Store_SetUserCreateRoom } from '@/src/firebase-instance/firebaseActions'
+import { Col, Row, Input, Form, Divider, Button } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import Loader from '@/src/components/Loader'
 
 const { Item } = Form
 const MultiPlayer = () => {
-	const [data, setData] = useState({
-		disabled: false,
-		resttime: 0,
-		gameselect: null,
-		playerCount: 5,
-		logged: false,
-		level: 5,
-		roomcode: ''
-	})
+	const [roomCode, setRoomCode] = useState('')
 	const [isLoading, setIsLoading] = useState(true)
 	const [status, setStatus] = useState(null)
-	const handleRoomCode = (e) => setData((prev) => ({ ...prev, roomcode: e.target.value }))
+	const handleRoomCode = (e) => setRoomCode(e.target.value)
 	const handleSearchRoom = (value) => {
 		setStatus(null)
 		Store_SetUserJoinRoom(value)
@@ -33,9 +22,6 @@ const MultiPlayer = () => {
 	}
 	const createRoom = () => {
 		Store_SetUserCreateRoom()
-	}
-	const joinRoom = () => {
-		Store_SetUserJoinRoom(data.roomcode)
 	}
 	const roomcodeInputValidator = (_, value) => {
 		if (value.length > 0) {
@@ -51,15 +37,6 @@ const MultiPlayer = () => {
 		<Loader style={{ minHeight: '100vh' }} />
 	) : (
 		<Fragment>
-			<PageHeader
-				onBack={() => window.history.back()}
-				title={
-					<Space>
-						<IcRegularSwords fill={IconBlack} height="1.2rem" />
-						Multiplayer
-					</Space>
-				}
-			/>
 			<div
 				style={{
 					backgroundColor: '#fafafa',
@@ -77,44 +54,19 @@ const MultiPlayer = () => {
 									}
 								]}
 								{...(status !== null && [404].includes(status.statusCode) ? { validateStatus: [404].includes(status.statusCode) ? 'error' : '', help: status.message } : {})}>
-								<Input.Search size="large" placeholder="Cari Room dengan Roomcode" allowClear value={data.roomcode} onChange={handleRoomCode} onSearch={handleSearchRoom} />
+								<Input.Search size="large" placeholder="Cari Room dengan Roomcode" allowClear value={roomCode} onChange={handleRoomCode} onSearch={handleSearchRoom} />
 							</Item>
 						</Form>
-
-						{/* <Icon name="search" />
-						<input />
-						<Button onClick={joinRoom} color="teal">
-							Cari
-						</Button> */}
 					</Col>
 					<Col span={24}>
 						<Divider>Atau</Divider>
 					</Col>
-					<Col span={24} style={{display:'flex', justifyContent:'center'}}>
-						<Button icon={<PlusOutlined />} onClick={createRoom}>Buat Room</Button>
-					</Col>
-					{/* <Segment basic textAlign="center"> */}
-					{/* <Input
-						value={data.roomcode}
-						onChange={handleRoomCode}
-						action
-						type="text"
-						iconPosition="left"
-						placeholder="roomcode"
-					>
-						<Icon name="search" />
-						<input />
-						<Button onClick={joinRoom} color="teal">
-							Cari
+					<Col span={24} style={{ display: 'flex', justifyContent: 'center' }}>
+						<Button icon={<PlusOutlined />} onClick={createRoom}>
+							Buat Room
 						</Button>
-					</Input> */}
-					{/* <Divider horizontal>Or</Divider> */}
-					{/* <Button onClick={createRoom} color="teal" content="Buat room" icon="add" labelPosition="left" /> */}
-					{/* </Segment> */}
+					</Col>
 				</Row>
-				{/* <NavBar as="navpage" head="Main Bareng">
-					<IcRegularSwords fill={IconBlack} height="4vh" />
-				</NavBar> */}
 			</div>
 		</Fragment>
 	)

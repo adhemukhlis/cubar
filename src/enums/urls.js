@@ -3,7 +3,7 @@ const URLS = {
 	LOGIN: '/login',
 	MENU: '/menu',
 	MULTIPLAYER: '/multiplayer',
-	ROOM: '/room',
+	ROOM: '/room/:id',
 	LEADERBOARD: '/leaderboard',
 	SIMPLICITY: '/game/simplicity'
 }
