@@ -1,24 +1,39 @@
 import React, { useState, useEffect, Fragment } from 'react'
 import { Store_SetUserJoinRoom, Store_SetUserCreateRoom } from '@/src/firebase-instance/firebaseActions'
-import { Col, Row, Input, Form, Divider, Button } from 'antd'
+import { Col, Row, Input, Form, Divider, Button, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import Loader from '@/src/components/Loader'
+import navigateTo from '../utils/navigateTo'
 
 const { Item } = Form
 const MultiPlayer = () => {
 	const [roomCode, setRoomCode] = useState('')
 	const [isLoading, setIsLoading] = useState(true)
+	const [createRoomLoading, setCreateRoomLoading] = useState(false)
 	const [status, setStatus] = useState(null)
 	const handleRoomCode = (e) => setRoomCode(e.target.value)
 	const handleSearchRoom = (value) => {
 		setStatus(null)
-		Store_SetUserJoinRoom(value)
-			.catch(({ statusCode, message }) => {
-				setStatus({ statusCode, message })
-			})
+		navigateTo(`/room/${value}`)
 	}
 	const createRoom = () => {
+		setCreateRoomLoading(true)
 		Store_SetUserCreateRoom()
+			.catch((err) => {
+				if (err.statusCode === 404) {
+					Modal.info({
+						title: 'Info',
+						content: (
+							<div>
+								<p>{err.message}</p>
+							</div>
+						)
+					})
+				}
+			})
+			.finally(() => {
+				setCreateRoomLoading(false)
+			})
 	}
 	const roomcodeInputValidator = (_, value) => {
 		if (value.length > 0) {
@@ -68,7 +83,7 @@ const MultiPlayer = () => {
 						<Divider>Atau</Divider>
 					</Col>
 					<Col span={24} style={{ display: 'flex', justifyContent: 'center' }}>
-						<Button icon={<PlusOutlined />} onClick={createRoom}>
+						<Button icon={<PlusOutlined />} onClick={createRoom} loading={createRoomLoading}>
 							Buat Room
 						</Button>
 					</Col>

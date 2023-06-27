@@ -54,7 +54,6 @@ export default {
 							.then(() => {
 								firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
 									if (tokenSnapshoot.val() !== utoken) {
-										console.log('AUTH_LOGIN tokenSnapshoot.val()', tokenSnapshoot.val())
 										firebaseRefUserToken(uid).off()
 										dispatch({
 											type: REDUCER_TYPES.AUTH_LOGIN

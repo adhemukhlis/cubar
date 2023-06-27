@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { LoginContainer, HeadLogo, ButtonLoginContainer } from '@/src/styles/styles'
 import { Cubar } from '@/src/styles/icon'
 import Button3d from '@/src/components/3d-button/3d-button'
@@ -42,8 +42,6 @@ const ViewLogin = () => {
 		},
 		scope: 'profile'
 	})
-
-	useEffect(() => {}, [])
 	return (
 		<div style={LoginContainer}>
 			<Cubar style={HeadLogo} />

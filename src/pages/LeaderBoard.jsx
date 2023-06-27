@@ -14,7 +14,6 @@ const Leaderboard = () => {
 	const [listLeaderboard, setListLeaderboard] = useState([])
 
 	useEffect(() => {
-		console.log('leaderboard useEffect')
 		firebaseListInstansi((data) => {
 			setListInstansi(data)
 		})

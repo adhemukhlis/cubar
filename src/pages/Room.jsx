@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Space, Avatar, Modal, Row, Col, Button, Tag } from 'antd'
-import { CaretRightOutlined, StarOutlined } from '@ant-design/icons'
+import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix } from 'antd'
+import { CaretRightOutlined, LeftOutlined, StarOutlined } from '@ant-design/icons'
 import { firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
 import { useParams } from 'react-router-dom'
 import { useStore } from 'react-redux'
@@ -10,7 +10,8 @@ import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
 import '@/src/styles/hideSelectionColumnTable.css'
 import navigateTo from '@/src/utils/navigateTo'
-import { Store_SetUserLeaveRoom } from '@/src/firebase-instance/firebaseActions'
+import { Store_SetJoinRoom, Store_SetUserLeaveRoom } from '@/src/firebase-instance/firebaseActions'
+import URLS from '../enums/urls'
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
@@ -29,6 +30,11 @@ const Room = () => {
 	const [restTime, setRestTime] = useState(0)
 	const [endOfCoolDown, setEndOfCoolDown] = useState(undefined)
 	const [coolDownTime, setCoolDownTime] = useState(undefined)
+	const handleLeave = () => {
+		Store_SetUserLeaveRoom(UID, roomMasterUID === UID ? 'master' : '', id).finally(() => {
+			navigateTo(URLS.MULTIPLAYER)
+		})
+	}
 	const handleStart = () => {
 		firebaseRefRoom(id)
 			.update({ playing: 'true', started_at: firebaseTimestamp })
@@ -42,27 +48,49 @@ const Room = () => {
 			})
 	}
 	useEffect(() => {
-		firebaseRefRoom(id).on('value', (snap) => {
-			if (snap.exists()) {
-				const { player, room_master, ...other } = snap.val()
-				setRoomMasterUID(room_master)
-				if (!isEqual(other, gameData)) {
-					setGameData(other)
+		Store_SetJoinRoom(id)
+			.then((res) => {
+				if (res === 'ok') {
+					firebaseRefRoom(id).on('value', (snap) => {
+						if (snap.exists()) {
+							const { player, room_master, ...other } = snap.val()
+							setRoomMasterUID(room_master)
+							if (!isEqual(other, gameData)) {
+								setGameData(other)
+							}
+							setPlayers(
+								Object.keys(player || {})
+									.map((key) => player[key])
+									.sort((a, b) => (b.user_role === 'master') - (a.user_role === 'master'))
+							)
+						} else {
+							Modal.info({
+								title: 'Room tidak ditemukan!',
+								content: (
+									<div>
+										<p>Room tidak ditemukan!</p>
+									</div>
+								),
+								onOk: () => navigateTo(URLS.MULTIPLAYER)
+							})
+						}
+						setLoading(false)
+					})
 				}
-				setPlayers(Object.keys(player || {}).map((key) => player[key]))
-			} else {
-				Modal.info({
-					title: 'Room tidak ditemukan!',
-					content: (
-						<div>
-							<p>Room tidak ditemukan!</p>
-						</div>
-					),
-					onOk: () => navigateTo('/menu')
-				})
-			}
-			setLoading(false)
-		})
+			})
+			.catch((err) => {
+				if (err.statusCode === 404) {
+					Modal.info({
+						title: 'Info',
+						content: (
+							<div>
+								<p>{err.message}</p>
+							</div>
+						),
+						onOk: () => navigateTo(URLS.MULTIPLAYER)
+					})
+				}
+			})
 
 		interval = setInterval(() => {
 			setRestTime((prev) => (prev += 1))
@@ -70,12 +98,8 @@ const Room = () => {
 		return () => {
 			// on unmount
 			console.log('unmount room', id)
-			Store_SetUserLeaveRoom(UID, roomMasterUID === UID ? 'master' : '', id)
-			firebaseRefRoom(id)
-				.update({ playing: 'false' })
-				.then(() => {
-					firebaseRefRoom(id).off()
-				})
+
+			firebaseRefRoom(id).off()
 		}
 	}, [])
 	useEffect(() => {
@@ -115,11 +139,24 @@ const Room = () => {
 	}
 	return (
 		<div>
-			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-				{gameData.playing === 'true' && coolDownTime > 0 && (
-					<Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration - 2} />
-				)}
-			</div>
+			<Affix offsetTop={10}>
+				<div style={{ display: 'flex', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.6)' }}>
+					<Button icon={<LeftOutlined />} onClick={handleLeave}>
+						Leave
+					</Button>
+					<div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end' }}>
+						{UID === roomMasterUID && !(gameData.playing === 'true' && coolDownTime > 0) && (
+							<Button icon={<CaretRightOutlined />} onClick={handleStart}>
+								Start
+							</Button>
+						)}
+						{gameData.playing === 'true' && coolDownTime > 0 && (
+							<Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration - 1} />
+						)}
+					</div>
+				</div>
+			</Affix>
+
 			<Table
 				rowKey="uid"
 				loading={loading}
@@ -150,13 +187,6 @@ const Room = () => {
 				title={() => (
 					<Row>
 						<Col span={16}>Room : {gameData.roomcode}</Col>
-						<Col span={8}>
-							{UID === roomMasterUID && (
-								<Button block icon={<CaretRightOutlined />} onClick={handleStart}>
-									Start
-								</Button>
-							)}
-						</Col>
 					</Row>
 				)}
 				scroll={{ x: 'max-content' }}
