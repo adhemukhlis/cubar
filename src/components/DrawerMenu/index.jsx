@@ -9,7 +9,6 @@ const DrawerMenu = (props) => {
 	const dispatch = useDispatch()
 	const authLogout = () => dispatch(AUTH_ACTIONS[ACTION_TYPES.AUTH_LOGOUT]())
 
-
 	const logoutHandler = () => {
 		authLogout()
 	}
@@ -19,7 +18,7 @@ const DrawerMenu = (props) => {
 				{/* <Button block icon={<UserOutlined />} onClick={() => history.push(getState('_globalUtoken') !== 'guest' ? PATH.account : PATH.menu)}>
 					Akun
 				</Button> */}
-				
+
 				<Divider dashed />
 				<Button block onClick={logoutHandler} icon={<LogoutOutlined />} danger>
 					Logout

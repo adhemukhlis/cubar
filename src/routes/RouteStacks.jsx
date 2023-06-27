@@ -14,11 +14,10 @@ const { store } = configureStore()
 const Page404 = lazy(() => import('../pages/404'))
 const Login = lazy(() => import('../pages/Login'))
 const Menu = lazy(() => import('../pages/Menu'))
-const MultiPlayer = lazy(() => import("../pages/MultiPlayer"));
-const Room = lazy(() => import("../pages/Room"));
+const MultiPlayer = lazy(() => import('../pages/MultiPlayer'))
+const Room = lazy(() => import('../pages/Room'))
 // const LeaderBoard = lazy(() => import("../pages/LeaderBoard"));
 // const Simplicity = lazy(() => import("../pages/games/simplicity"));
-
 
 const RouteStacks = () => {
 	const loggedIn = () => {
@@ -49,7 +48,7 @@ const RouteStacks = () => {
 					</PrivateRoute>
 				}
 			/>
-		 <Route
+			<Route
 				path={URLS.MULTIPLAYER}
 				element={
 					<PrivateRoute path={URLS.MULTIPLAYER} allow={[loggedIn]}>
@@ -57,7 +56,7 @@ const RouteStacks = () => {
 					</PrivateRoute>
 				}
 			/>
-				<Route
+			<Route
 				path={URLS.ROOM}
 				element={
 					<PrivateRoute path={URLS.ROOM} allow={[loggedIn]}>
@@ -65,7 +64,7 @@ const RouteStacks = () => {
 					</PrivateRoute>
 				}
 			/>
-		{/*	<Route
+			{/*	<Route
 				path={URLS.MULTIPLAYER}
 				element={
 					<PrivateRoute path={URLS.MULTIPLAYER} allow={[loggedIn]}>

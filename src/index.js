@@ -4,10 +4,8 @@ import * as serviceWorker from '@/src/serviceWorker'
 import EntryPoint from '@/src/EntryPoint'
 import '@/src/index.css'
 
-const root = ReactDOM.createRoot(document.getElementById('root')) 
-root.render(
-	<EntryPoint />
-)
+const root = ReactDOM.createRoot(document.getElementById('root'))
+root.render(<EntryPoint />)
 
 serviceWorker.register({
 	onUpdate: (registration) => {

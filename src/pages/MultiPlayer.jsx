@@ -53,8 +53,17 @@ const MultiPlayer = () => {
 										validator: roomcodeInputValidator
 									}
 								]}
-								{...(status !== null && [404].includes(status.statusCode) ? { validateStatus: [404].includes(status.statusCode) ? 'error' : '', help: status.message } : {})}>
-								<Input.Search size="large" placeholder="Cari Room dengan Roomcode" allowClear value={roomCode} onChange={handleRoomCode} onSearch={handleSearchRoom} />
+								{...(status !== null && [404].includes(status.statusCode)
+									? { validateStatus: [404].includes(status.statusCode) ? 'error' : '', help: status.message }
+									: {})}>
+								<Input.Search
+									size="large"
+									placeholder="Cari Room dengan Roomcode"
+									allowClear
+									value={roomCode}
+									onChange={handleRoomCode}
+									onSearch={handleSearchRoom}
+								/>
 							</Item>
 						</Form>
 					</Col>

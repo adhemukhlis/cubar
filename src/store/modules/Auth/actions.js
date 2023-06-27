@@ -6,7 +6,7 @@ import { firebaseRefUserToken } from '@/src/firebase-instance/firebaseRef'
 import URLS from '@/src/enums/urls'
 import AUTH_GETTERS from './getters'
 import navigateTo from '@/src/utils/navigateTo'
-import { googleLogout } from '@react-oauth/google';
+import { googleLogout } from '@react-oauth/google'
 import { Store_OffLogin } from '@/src/firebase-instance/firebaseActions'
 
 /**
@@ -104,61 +104,63 @@ export default {
 						return ApiService.request({
 							method: 'get',
 							url: `accounts/${uid}.json`
-						}).then((res) => {
-							const _status = get(res, 'status', 500)
-							const _utoken = get(res, 'data.utoken', '')
-							if (_status === 200) {
-								if (utoken === _utoken) {
-									firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
-										if (tokenSnapshoot.val() !== utoken) {
-											firebaseRefUserToken(uid).off()
-											dispatch({
-												type: REDUCER_TYPES.AUTH_LOGIN
-											})
-											dispatch({
-												type: REDUCER_TYPES.USER_USER_DATA
-											})
-											navigateTo(URLS.LOGIN)
-										}
-									})
-									dispatch({
-										type: REDUCER_TYPES.USER_USER_DATA,
-										uid: res.data.uid,
-										username: res.data.name,
-										email: res.data.email,
-										imageProfile: res.data.imageProfile
-									})
-									resolve({ status: 200 })
-								} else {
-									firebaseRefUserToken(uid).off()
-									dispatch({
-										type: REDUCER_TYPES.AUTH_LOGIN
-									})
-									dispatch({
-										type: REDUCER_TYPES.USER_USER_DATA
-									})
-									resolve({ status: 403 })
-								}
-							}
-						}).finally(() => {
-							dispatch({
-								type: REDUCER_TYPES.AUTH_LOGIN,
-								isLoading: false
-							})
 						})
+							.then((res) => {
+								const _status = get(res, 'status', 500)
+								const _utoken = get(res, 'data.utoken', '')
+								if (_status === 200) {
+									if (utoken === _utoken) {
+										firebaseRefUserToken(uid).on('value', (tokenSnapshoot) => {
+											if (tokenSnapshoot.val() !== utoken) {
+												firebaseRefUserToken(uid).off()
+												dispatch({
+													type: REDUCER_TYPES.AUTH_LOGIN
+												})
+												dispatch({
+													type: REDUCER_TYPES.USER_USER_DATA
+												})
+												navigateTo(URLS.LOGIN)
+											}
+										})
+										dispatch({
+											type: REDUCER_TYPES.USER_USER_DATA,
+											uid: res.data.uid,
+											username: res.data.name,
+											email: res.data.email,
+											imageProfile: res.data.imageProfile
+										})
+										resolve({ status: 200 })
+									} else {
+										firebaseRefUserToken(uid).off()
+										dispatch({
+											type: REDUCER_TYPES.AUTH_LOGIN
+										})
+										dispatch({
+											type: REDUCER_TYPES.USER_USER_DATA
+										})
+										resolve({ status: 403 })
+									}
+								}
+							})
+							.finally(() => {
+								dispatch({
+									type: REDUCER_TYPES.AUTH_LOGIN,
+									isLoading: false
+								})
+							})
 				  })
 				: { status: 404 }
 		}
 	},
 	[ACTION_TYPES.AUTH_LOGOUT]() {
 		return async (dispatch, state) => {
-			googleLogout();
+			googleLogout()
 			const uid = AUTH_GETTERS.uid(state())
 			ApiService.request({
 				method: 'patch',
 				url: `accounts/${uid}.json`,
 				data: {
-					utoken:'',
+					utoken: ''
 				}
 			})
 			return true

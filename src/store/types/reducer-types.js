@@ -6,8 +6,8 @@
  * @var {object}
  */
 const REDUCER_TYPES = {
-  AUTH_LOGIN: "AUTH_LOGIN",
-  USER_USER_DATA: "USER_USER_DATA",
-};
+	AUTH_LOGIN: 'AUTH_LOGIN',
+	USER_USER_DATA: 'USER_USER_DATA'
+}
 
-export default REDUCER_TYPES;
+export default REDUCER_TYPES

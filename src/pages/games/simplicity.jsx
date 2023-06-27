@@ -4,7 +4,14 @@ import Score from '../../component/score'
 import { Transition } from 'semantic-ui-react'
 import { IcRegularQuestionSquare } from '../../icons/react-icon-svg'
 import Button3d from '../../component/3d-button/3d-button'
-import { ButtonFontSize, ButtonSimStyle, ChalStyle, ContainerCenterBasic, IconSizeQuestion, ScoreGame } from '../../config/styles'
+import {
+	ButtonFontSize,
+	ButtonSimStyle,
+	ChalStyle,
+	ContainerCenterBasic,
+	IconSizeQuestion,
+	ScoreGame
+} from '../../config/styles'
 import { ConfigTransition } from '../../config/config'
 import { RandValue } from '../../lib/func'
 import moment from 'moment'
@@ -110,7 +117,10 @@ const Simplicity = () => {
 			<div style={ScoreGame}>
 				<Score a={benar} b={salah} />
 			</div>
-			<Transition animation={isCorrect ? ConfigTransition.animation[0] : ConfigTransition.animation[1]} duration={ConfigTransition.duration} visible={visible}>
+			<Transition
+				animation={isCorrect ? ConfigTransition.animation[0] : ConfigTransition.animation[1]}
+				duration={ConfigTransition.duration}
+				visible={visible}>
 				<div style={ChalStyle}>
 					<span>{soal[indexSoal].q}=</span>
 					<IcRegularQuestionSquare height={IconSizeQuestion} />
@@ -130,6 +140,7 @@ const OptionsMemo = memo(
 				</Button3d>
 			))
 	},
-	(prevProps, nextProps) => !['soal', 'indexSoal'].map((item) => isEqual(prevProps[item], nextProps[item])).includes(false)
+	(prevProps, nextProps) =>
+		!['soal', 'indexSoal'].map((item) => isEqual(prevProps[item], nextProps[item])).includes(false)
 )
 export default Simplicity

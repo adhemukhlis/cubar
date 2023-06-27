@@ -116,7 +116,11 @@ const Room = () => {
 	return (
 		<div>
 			{roomMasterUID}
-			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>{gameData.playing === 'true' && coolDownTime > 0 && <Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration-2} />}</div>
+			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+				{gameData.playing === 'true' && coolDownTime > 0 && (
+					<Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration - 2} />
+				)}
+			</div>
 			<Table
 				rowKey="uid"
 				loading={loading}
@@ -148,12 +152,11 @@ const Room = () => {
 					<Row>
 						<Col span={16}>Room : {gameData.roomcode}</Col>
 						<Col span={8}>
-							{
-							 UID	=== roomMasterUID && <Button block icon={<CaretRightOutlined />} onClick={handleStart}>
-								Start
-							</Button>
-							}
-							
+							{UID === roomMasterUID && (
+								<Button block icon={<CaretRightOutlined />} onClick={handleStart}>
+									Start
+								</Button>
+							)}
 						</Col>
 					</Row>
 				)}

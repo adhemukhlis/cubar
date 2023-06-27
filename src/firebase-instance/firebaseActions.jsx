@@ -1,4 +1,11 @@
-import { timeRef, firebaseRefUserFind, firebaseRefRoomCode, firebaseRefRoom, firebaseRefPlayerOnRoom, firebaseRefGame } from './firebaseRef'
+import {
+	timeRef,
+	firebaseRefUserFind,
+	firebaseRefRoomCode,
+	firebaseRefRoom,
+	firebaseRefPlayerOnRoom,
+	firebaseRefGame
+} from './firebaseRef'
 import configureStore from 'src/store'
 import USER_GETTERS from '@/src/store/modules/User/getters'
 import navigateTo from '@/src/utils/navigateTo'
@@ -33,7 +40,6 @@ export const Store_SetUserCreateRoom = () => {
 }
 
 export const Store_SetUserJoinRoom = (roomcode) => {
-	console.log('hehehe')
 	const UID = USER_GETTERS.UID(store.getState())
 	const username = USER_GETTERS.username(store.getState())
 	const imageProfile = USER_GETTERS.imageProfile(store.getState())

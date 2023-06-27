@@ -16,13 +16,9 @@ const App = () => {
 	const dispatch = useDispatch()
 	const authCheck = () => dispatch(AUTH_ACTIONS[ACTION_TYPES.AUTH_CHECK]())
 	useEffect(() => {
-		authCheck()
-			.then((res) => {
-				console.log(res)
-			})
-			.finally(() => {
-				setLoading(false)
-			})
+		authCheck().finally(() => {
+			setLoading(false)
+		})
 	}, [])
 	return <Fragment>{loading ? <LoaderIndicator /> : <RouteService />}</Fragment>
 }

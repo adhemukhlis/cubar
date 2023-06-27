@@ -9,7 +9,10 @@ import Loader from '@/src/components/Loader'
 const { store, persistor } = configureStore()
 
 const EntryPoint = () => {
-	console.log(`%c ENTRYPOINT MOUNTED`, `color:#83EEFF; background-color: transparent; padding:10px; border: 2px dashed #83EEFF; border-radius: 0.8em;`)
+	console.log(
+		`%c ENTRYPOINT MOUNTED`,
+		`color:#83EEFF; background-color: transparent; padding:10px; border: 2px dashed #83EEFF; border-radius: 0.8em;`
+	)
 
 	const LoaderIndicator = () => {
 		return (

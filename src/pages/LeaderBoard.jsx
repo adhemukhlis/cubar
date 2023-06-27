@@ -15,7 +15,6 @@ const Leaderboard = () => {
 
 	useEffect(() => {
 		console.log('leaderboard useEffect')
-
 		firebaseListInstansi((data) => {
 			setListInstansi(data)
 		})
@@ -95,15 +94,31 @@ const Leaderboard = () => {
 				style={{
 					backgroundColor: '#fafafa',
 					padding: '2rem',
-					minHeight:'100vh'
+					minHeight: '100vh'
 				}}>
 				<Row style={{ marginBottom: '2rem', gap: '10' }}>
 					<Col {...{ xs: 24, sm: 4, md: 4, lg: 4, lg: 4 }}>
-						<Select style={{ width: '100%' }} size="large" showSearch value={leaderboardFilter} placeholder="Select a person" optionFilterProp="children" onChange={onFilterBoardChange} onSearch={onFilterBoardSearch} filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())} options={listInstansiOptions} />
+						<Select
+							style={{ width: '100%' }}
+							size="large"
+							showSearch
+							value={leaderboardFilter}
+							placeholder="Select a person"
+							optionFilterProp="children"
+							onChange={onFilterBoardChange}
+							onSearch={onFilterBoardSearch}
+							filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+							options={listInstansiOptions}
+						/>
 					</Col>
 				</Row>
 				<Card>
-					<Table columns={columns} rowKey="number" dataSource={orderedUser.map(({ nama, skor }, n) => ({ number: n + 1, nama, skor, imageUrl: '' }))} pagination={{ responsive: true }} />
+					<Table
+						columns={columns}
+						rowKey="number"
+						dataSource={orderedUser.map(({ nama, skor }, n) => ({ number: n + 1, nama, skor, imageUrl: '' }))}
+						pagination={{ responsive: true }}
+					/>
 				</Card>
 			</div>
 		</Fragment>
