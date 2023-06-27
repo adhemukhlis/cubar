@@ -13,9 +13,6 @@ const MultiPlayer = () => {
 	const handleSearchRoom = (value) => {
 		setStatus(null)
 		Store_SetUserJoinRoom(value)
-			.then((res) => {
-				console.log(res)
-			})
 			.catch(({ statusCode, message }) => {
 				setStatus({ statusCode, message })
 			})

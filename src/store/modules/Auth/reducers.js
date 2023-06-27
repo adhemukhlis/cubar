@@ -6,7 +6,6 @@ const initialState = {}
 
 export default createReducer(initialState, {
 	[REDUCER_TYPES.AUTH_LOGIN](state, { type, ...payload }) {
-		console.log('reducer', payload)
 		return objectMerge(state, 'login', payload)
 	}
 })

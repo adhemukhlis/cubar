@@ -9,7 +9,7 @@ root.render(<EntryPoint />)
 
 serviceWorker.register({
 	onUpdate: (registration) => {
-		alert('New version available!  Ready to update?')
+		alert('New version available! Ready to update?')
 		window.location.reload()
 		if (registration && registration.waiting) {
 			registration.waiting.postMessage({ type: 'SKIP_WAITING' })

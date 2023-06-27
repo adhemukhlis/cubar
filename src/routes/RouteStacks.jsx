@@ -1,4 +1,4 @@
-import React, { lazy } from 'react'
+import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import PrivateRoute from '@/src/routes/PrivateRoute'
 import configureStore from '@/src/store'
@@ -11,17 +11,17 @@ import AUTH_GETTERS from '../store/modules/Auth/getters'
 // store
 const { store } = configureStore()
 // pages
-const Page404 = lazy(() => import('../pages/404'))
-const Login = lazy(() => import('../pages/Login'))
-const Menu = lazy(() => import('../pages/Menu'))
-const MultiPlayer = lazy(() => import('../pages/MultiPlayer'))
-const Room = lazy(() => import('../pages/Room'))
-// const LeaderBoard = lazy(() => import("../pages/LeaderBoard"));
-// const Simplicity = lazy(() => import("../pages/games/simplicity"));
 
+
+import Page404 from '../pages/404'
+import Login from '../pages/Login'
+import Menu from '../pages/Menu'
+import MultiPlayer from '../pages/MultiPlayer'
+import Room from '../pages/Room'
+// import LeaderBoard from "../pages/LeaderBoard"
+import Simplicity from "../pages/games/simplicity"
 const RouteStacks = () => {
 	const loggedIn = () => {
-		console.log(AUTH_GETTERS.loginToken(store.getState()))
 		return !isEmpty(AUTH_GETTERS.loginToken(store.getState()))
 	}
 	const loggedOut = () => {
@@ -31,7 +31,6 @@ const RouteStacks = () => {
 	return (
 		<Routes>
 			<Route exact path={URLS.LANDING} element={<Navigate to={URLS.MENU} />} />
-
 			<Route
 				path={URLS.LOGIN}
 				element={
@@ -71,15 +70,15 @@ const RouteStacks = () => {
 						<LeaderBoard />
 					</PrivateRoute>
 				}
-			/>
+			/>*/}
 			<Route
-				path={URLS.MULTIPLAYER}
+				path={URLS.SIMPLICITY}
 				element={
-					<PrivateRoute path={URLS.MULTIPLAYER} allow={[loggedIn]}>
+					<PrivateRoute path={URLS.SIMPLICITY} allow={[loggedIn]}>
 						<Simplicity />
 					</PrivateRoute>
 				}
-			/> */}
+			/> 
 
 			{/* keep  <Route path="*"> being the last of siblings */}
 			<Route path="*" element={<Page404 />} />

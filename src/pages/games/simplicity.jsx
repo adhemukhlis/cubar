@@ -1,9 +1,8 @@
 import React, { useState, useEffect, memo } from 'react'
-import Countdown from '../../component/countdown'
-import Score from '../../component/score'
-import { Transition } from 'semantic-ui-react'
-import { IcRegularQuestionSquare } from '../../icons/react-icon-svg'
-import Button3d from '../../component/3d-button/3d-button'
+import Countdown from '@/src/components/Countdown'
+import Score from '@/src/components/Score'
+import { IcRegularQuestionSquare } from '@/src/styles/react-icon-svg'
+import Button3d from '@/src/components/3d-button/3d-button'
 import {
 	ButtonFontSize,
 	ButtonSimStyle,
@@ -11,11 +10,15 @@ import {
 	ContainerCenterBasic,
 	IconSizeQuestion,
 	ScoreGame
-} from '../../config/styles'
-import { ConfigTransition } from '../../config/config'
-import { RandValue } from '../../lib/func'
-import moment from 'moment'
+} from '@/src/styles/styles'
+import randValue from '@/src/utils/randValue'
+import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
+import { motion } from 'framer-motion'
+const duration = require('dayjs/plugin/duration')
+const relativeTime = require('dayjs/plugin/relativeTime')
+dayjs.extend(relativeTime)
+dayjs.extend(duration)
 
 const Simplicity = () => {
 	const [isCorrect, setIsCorrect] = useState(undefined)
@@ -24,46 +27,46 @@ const Simplicity = () => {
 	const [visible, setVisible] = useState(true)
 	const [indexSoal, setIndexSoal] = useState(0)
 	const [endOfCoolDown, setEndOfCoolDown] = useState(undefined)
-	const [endAt, setEndAt] = useState(moment().add(30000, 'ms'))
+	const [endAt, setEndAt] = useState(dayjs().add(30000, 'ms'))
 	const [coolDownTime, setCoolDownTime] = useState(undefined)
 
 	const soal = [
 		{
-			fn: [0, 1, 4],
-			q: '1+1',
-			r: 2
+			options: [0, 1, 4],
+			question: '1+1',
+			answer: 2
 		},
 		{
-			fn: [2, 3, 4],
-			q: '(1+1)/2',
-			r: 1
+			options: [2, 3, 4],
+			question: '(1+1)/2',
+			answer: 1
 		},
 		{
-			fn: [3, 7, 10],
-			q: '5-(1x1)',
-			r: 4
+			options: [3, 7, 10],
+			question: '5-(1x1)',
+			answer: 4
 		},
 		{
-			fn: [2, 5, 6],
-			q: '4/(1-1)',
-			r: 0
+			options: [2, 5, 6],
+			question: '4/(1-1)',
+			answer: 0
 		},
 		{
-			fn: [3, 5, 7],
-			q: '6x2',
-			r: 12
+			options: [3, 5, 7],
+			question: '6x2',
+			answer: 12
 		},
 		{
-			fn: [2, 17, 60],
-			q: '12-5',
-			r: 7
+			options: [2, 17, 60],
+			question: '12-5',
+			answer: 7
 		}
 	]
 	const plusPoint = () => {
 		setBenar((prev) => prev + 1)
 		setIsCorrect(true)
 		setVisible((prev) => !prev)
-		RandValue(5, 0, indexSoal, (value) => {
+		randValue(5, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}
@@ -73,10 +76,14 @@ const Simplicity = () => {
 		setVisible((prev) => !prev)
 	}
 	const check = (val) => {
-		val === soal[indexSoal].r ? plusPoint() : minPoint()
+		if (val === soal[indexSoal].answer) {
+			plusPoint()
+		} else {
+			minPoint()
+		}
 	}
 	useEffect(() => {
-		RandValue(5, 0, indexSoal, (value) => {
+		randValue(5, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}, [])
@@ -85,16 +92,16 @@ const Simplicity = () => {
 
 		if (endOfCoolDown === undefined) {
 			const gameStartAt = endAt
-			const waitTime = (gameStartAt.diff(moment(), 'ms') % 1000) - 1
+			const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
 			setTimeout(() => {
 				setEndOfCoolDown(gameStartAt.subtract(waitTime, 'ms'))
 			}, waitTime)
 		} else {
 			gameCooldown = setInterval(() => {
-				const secondRemaining = endOfCoolDown.diff(moment(), 's')
+				const secondRemaining = endOfCoolDown.diff(dayjs(), 's')
 				if (secondRemaining < 0) {
 					if (getDuration() > 0) {
-						setEndOfCoolDown(moment().add(getDuration(), 'ms'))
+						setEndOfCoolDown(dayjs().add(getDuration(), 'ms'))
 					} else {
 						clearInterval(gameCooldown)
 					}
@@ -108,7 +115,7 @@ const Simplicity = () => {
 	}, [endOfCoolDown])
 
 	const getDuration = () => {
-		return endAt.diff(moment(), 'ms')
+		return endAt.diff(dayjs(), 'ms')
 	}
 
 	return (
@@ -117,30 +124,36 @@ const Simplicity = () => {
 			<div style={ScoreGame}>
 				<Score a={benar} b={salah} />
 			</div>
-			<Transition
-				animation={isCorrect ? ConfigTransition.animation[0] : ConfigTransition.animation[1]}
-				duration={ConfigTransition.duration}
-				visible={visible}>
-				<div style={ChalStyle}>
-					<span>{soal[indexSoal].q}=</span>
-					<IcRegularQuestionSquare height={IconSizeQuestion} />
-				</div>
-			</Transition>
-			<OptionsMemo soal={soal} indexSoal={indexSoal} check={check} />
+			<motion.div
+				key={benar}
+				style={ChalStyle}
+				initial={{ opacity: 0, scale: 0.5 }}
+				animate={{ opacity: 1, scale: 1 }}
+				transition={{
+					duration: 0.8,
+					delay: 0.2,
+					ease: [0, 0.71, 0.2, 1.01]
+				}}>
+				<span className="prevent-select">{soal[indexSoal].question}=</span>
+				<IcRegularQuestionSquare height={IconSizeQuestion} />
+			</motion.div>
+			<OptionsMemo soal={soal} indexSoal={indexSoal} check={check} salah={salah} />
 		</div>
 	)
 }
 const OptionsMemo = memo(
 	({ soal, indexSoal, check }) => {
-		return [...soal[indexSoal].fn, soal[indexSoal].r]
+		return [...soal[indexSoal].options, soal[indexSoal].answer]
 			.sort(() => 0.5 - Math.random())
 			.map((number, n) => (
 				<Button3d key={n} style={ButtonSimStyle} onClick={() => check(number)}>
-					<span style={ButtonFontSize}>{number}</span>
+					<span style={ButtonFontSize} className="prevent-select">
+						{number}
+					</span>
 				</Button3d>
 			))
 	},
 	(prevProps, nextProps) =>
-		!['soal', 'indexSoal'].map((item) => isEqual(prevProps[item], nextProps[item])).includes(false)
+		!['soal', 'indexSoal', 'salah'].map((item) => isEqual(prevProps[item], nextProps[item])).includes(false)
 )
 export default Simplicity

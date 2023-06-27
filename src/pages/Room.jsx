@@ -84,7 +84,7 @@ const Room = () => {
 		}
 	}, [restTime])
 	useEffect(() => {
-		var tradeCoolDown = undefined
+		var countDown = undefined
 		if (gameData.playing === 'true' && gameData?.game_start_at !== undefined) {
 			if (endOfCoolDown === undefined) {
 				const gameStartAt = dayjs(gameData.game_start_at)
@@ -93,13 +93,13 @@ const Room = () => {
 					setEndOfCoolDown(gameStartAt.subtract(waitTime, 'ms'))
 				}, waitTime)
 			} else {
-				tradeCoolDown = setInterval(() => {
+				countDown = setInterval(() => {
 					const secondRemaining = endOfCoolDown.diff(dayjs(), 's')
 					if (secondRemaining < 0) {
 						if (getDuration() > 0) {
 							setEndOfCoolDown(dayjs().add(getDuration(), 'ms'))
 						} else {
-							clearInterval(tradeCoolDown)
+							clearInterval(countDown)
 						}
 					} else {
 						setCoolDownTime(secondRemaining)
@@ -108,14 +108,13 @@ const Room = () => {
 			}
 		}
 
-		return () => clearInterval(tradeCoolDown)
+		return () => clearInterval(countDown)
 	}, [endOfCoolDown, gameData])
 	const getDuration = () => {
 		return dayjs(gameData.game_start_at).diff(dayjs(), 'ms')
 	}
 	return (
 		<div>
-			{roomMasterUID}
 			<div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
 				{gameData.playing === 'true' && coolDownTime > 0 && (
 					<Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration - 2} />
