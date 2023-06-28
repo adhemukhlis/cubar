@@ -12,14 +12,13 @@ import AUTH_GETTERS from '../store/modules/Auth/getters'
 const { store } = configureStore()
 // pages
 
-
 import Page404 from '../pages/404'
 import Login from '../pages/Login'
 import Menu from '../pages/Menu'
 import MultiPlayer from '../pages/MultiPlayer'
 import Room from '../pages/Room'
-// import LeaderBoard from "../pages/LeaderBoard"
-import Simplicity from "../pages/games/simplicity"
+import LeaderBoard from '../pages/LeaderBoard'
+import Simplicity from '../pages/games/simplicity'
 const RouteStacks = () => {
 	const loggedIn = () => {
 		return !isEmpty(AUTH_GETTERS.loginToken(store.getState()))
@@ -63,14 +62,14 @@ const RouteStacks = () => {
 					</PrivateRoute>
 				}
 			/>
-			{/*	<Route
-				path={URLS.MULTIPLAYER}
+			<Route
+				path={URLS.LEADERBOARD}
 				element={
-					<PrivateRoute path={URLS.MULTIPLAYER} allow={[loggedIn]}>
+					<PrivateRoute path={URLS.LEADERBOARD}>
 						<LeaderBoard />
 					</PrivateRoute>
 				}
-			/>*/}
+			/>
 			<Route
 				path={URLS.SIMPLICITY}
 				element={
@@ -78,7 +77,7 @@ const RouteStacks = () => {
 						<Simplicity />
 					</PrivateRoute>
 				}
-			/> 
+			/>
 
 			{/* keep  <Route path="*"> being the last of siblings */}
 			<Route path="*" element={<Page404 />} />

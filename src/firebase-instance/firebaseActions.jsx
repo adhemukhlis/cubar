@@ -4,7 +4,9 @@ import {
 	firebaseRefRoomCode,
 	firebaseRefRoom,
 	firebaseRefPlayerOnRoom,
-	firebaseRefGame
+	firebaseRefGame,
+	firebaseRefLeaderBoard,
+	firebaseRefListInstansi
 } from './firebaseRef'
 import configureStore from 'src/store'
 import USER_GETTERS from '@/src/store/modules/User/getters'
@@ -146,4 +148,28 @@ export const Store_SetUserLeaveRoom = async (id, master, roomcode) =>
 			firebaseRefPlayerOnRoom(roomcode, id).remove()
 			resolve('ok')
 		}
+	})
+export const firebaseListLeaderboardByInstansi = (key, callback) =>
+	firebaseRefLeaderBoard.child(key)
+	// .on('value', (snap) => {
+	// 	let tmp = []
+	// 	snap.forEach((data) => {
+	// 		tmp.push({
+	// 			...data.val(),
+	// 			id: data.key
+	// 		})
+	// 	})
+	// 	callback(tmp)
+	// }
+	// )
+export const firebaseListInstansi = (callback) =>
+	firebaseRefListInstansi.on('value', (snap) => {
+		let tmp = []
+		snap.forEach((data) => {
+			tmp.push({
+				...data.val(),
+				key: data.key
+			})
+		})
+		callback(tmp)
 	})

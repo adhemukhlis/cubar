@@ -1,11 +1,10 @@
 import React, { Fragment, useEffect, useState } from 'react'
-import orderBy from 'lodash/orderBy'
-import { firebaseListInstansi, firebaseListLeaderboardByInstansi } from '../store/firebaseActions'
-import { IconBlack } from '../config/styles'
-import { IcRegularCrown } from '../icons/react-icon-svg'
-import { Space, Table, Tag, Avatar, Typography, Select, Row, Col, Card, PageHeader } from 'antd'
-import Loader from 'src/game/component/loader'
-import { firebaseRefLeaderBoard, firebaseRefListInstansi } from 'src/firebaseRef/firebaseRef'
+import { orderBy } from 'lodash'
+import { firebaseListLeaderboardByInstansi } from '@/src/firebase-instance/firebaseActions'
+import { Space, Table, Tag, Avatar, Typography, Select, Row, Col, Card, Affix, Button } from 'antd'
+import Loader from '@/src/components/Loader'
+import { firebaseRefLeaderBoard, firebaseRefListInstansi } from '@/src/firebase-instance/firebaseRef'
+import { LeftOutlined } from '@ant-design/icons'
 const { Text } = Typography
 const Leaderboard = () => {
 	const [isLoading, setIsLoading] = useState(true)
@@ -14,17 +13,31 @@ const Leaderboard = () => {
 	const [listLeaderboard, setListLeaderboard] = useState([])
 
 	useEffect(() => {
-		firebaseListInstansi((data) => {
-			setListInstansi(data)
+		firebaseRefListInstansi.once('value', (snap) => {
+			const data = snap.val()
+			const listData = Object.keys(data).map((key) => {
+				return { key, ...data[key] }
+			})
+			setListInstansi(listData)
 		})
 
 		return () => {
 			firebaseRefListInstansi.off()
+			firebaseListLeaderboardByInstansi(leaderboardFilter).off()
 		}
 	}, [])
 	useEffect(() => {
-		firebaseListLeaderboardByInstansi(leaderboardFilter, (data) => {
-			setListLeaderboard(data.map(({ nama, skor }) => ({ nama, skor })))
+		// firebaseListLeaderboardByInstansi(leaderboardFilter, (data) => {
+		// 	setListLeaderboard(data.map(({ nama, skor }) => ({ nama, skor })))
+		// 	setIsLoading(false)
+		// })
+		firebaseListLeaderboardByInstansi(leaderboardFilter).on('value', (snap) => {
+			const data = snap.val()
+			const listData = Object.keys(data).map((key) => {
+				const { nama, skor } = data[key]
+				return { id: key, nama, skor }
+			})
+			setListLeaderboard(listData)
 			setIsLoading(false)
 		})
 	}, [leaderboardFilter])
@@ -59,13 +72,12 @@ const Leaderboard = () => {
 			}
 		},
 		{
-			title: 'Score',
+			title: 'Performance',
 			dataIndex: 'skor',
 			key: 'skor'
 		}
 	]
 	const onFilterBoardChange = (value) => {
-		console.log('onFilterBoardChange', leaderboardFilter)
 		setIsLoading(true)
 		setLeaderboardFilter((prev) => {
 			firebaseRefLeaderBoard.child(prev).off()
@@ -77,24 +89,24 @@ const Leaderboard = () => {
 		// setLeaderboardState((prev) => ({ ...prev, leaderboardFilter: value }))
 	}
 	return isLoading ? (
-		<Loader style={{ minHeight: '100vh' }} />
+		<div style={{ minHeight: '100vh' }}>
+			<Loader />
+		</div>
 	) : (
 		<Fragment>
-			<PageHeader
-				onBack={() => window.history.back()}
-				title={
-					<Space>
-						<IcRegularCrown fill={IconBlack} height="1.2rem" />
-						Leaderboard
-					</Space>
-				}
-			/>
 			<div
 				style={{
 					backgroundColor: '#fafafa',
 					padding: '2rem',
 					minHeight: '100vh'
 				}}>
+				<Affix offsetTop={10}>
+					<div style={{ display: 'flex', padding: '1rem 0 1rem 0' }}>
+						<Button icon={<LeftOutlined />} onClick={() => window.history.back()}>
+							Back
+						</Button>
+					</div>
+				</Affix>
 				<Row style={{ marginBottom: '2rem', gap: '10' }}>
 					<Col {...{ xs: 24, sm: 4, md: 4, lg: 4, lg: 4 }}>
 						<Select
@@ -115,6 +127,7 @@ const Leaderboard = () => {
 					<Table
 						columns={columns}
 						rowKey="number"
+						scroll={{ x: 'max-content' }}
 						dataSource={orderedUser.map(({ nama, skor }, n) => ({ number: n + 1, nama, skor, imageUrl: '' }))}
 						pagination={{ responsive: true }}
 					/>

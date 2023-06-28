@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 
 import { ProfileContainer, GridContainer, UsernameMenuText } from '@/src/styles/styles'
 import URLS from '@/src/enums/urls'
-import { IcRegularSwords } from '@/src/styles/react-icon-svg'
+import { IcRegularSwords, IcRegularCrown } from '@/src/styles/react-icon-svg'
 import ControlMenu from '@/src/components/ControlMenu'
 import DrawerMenu from '@/src/components/DrawerMenu'
 import { Avatar, Button, Drawer } from 'antd'
@@ -39,6 +39,9 @@ const Menu = () => {
 			<div style={GridContainer}>
 				<ControlMenu text="Main Bareng" to={URLS.MULTIPLAYER}>
 					<IcRegularSwords fill="rgba(0, 0, 0, 0.6)" height="10vw" />
+				</ControlMenu>
+				<ControlMenu text="Leaderboard" to={URLS.LEADERBOARD}>
+					<IcRegularCrown fill="rgba(0, 0, 0, 0.6)" height="10vw" />
 				</ControlMenu>
 			</div>
 		</div>
