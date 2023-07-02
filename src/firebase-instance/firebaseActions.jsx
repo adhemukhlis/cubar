@@ -16,23 +16,21 @@ export const Store_OffLogin = (uid) => {
 	firebaseRefUserFind(uid).off()
 }
 
-export const Store_SetJoinRoom = (roomCode) => {
-	console.log(roomCode)
+export const Store_SetJoinRoom = (roomCode, gameFrom) => {
+	console.log(gameFrom)
 	const UID = USER_GETTERS.UID(store.getState())
 	const username = USER_GETTERS.username(store.getState())
 	const imageProfile = USER_GETTERS.imageProfile(store.getState())
 	return new Promise((resolve, reject) =>
 		firebaseRefRoomCode(UID).once('value', (snap) => {
-			console.log(snap.val())
 			if (snap.exists()) {
-				console.log(snap.val() === roomCode)
-
 				if (snap.val() === roomCode) {
 					// cek jika player memasuki room miliknya
-					firebaseRefRoom(snap.val()).set({
+					console.log('Store_SetJoinRoom')
+					firebaseRefRoom(snap.val()).update({
 						roomcode: snap.val(),
-						playing: false,
-						room_master: UID
+						room_master: UID,
+						...(gameFrom === undefined ? { game_status: 'waiting' } : {})
 					})
 					firebaseRefPlayerOnRoom(snap.val(), UID).set({
 						playing: false,
@@ -46,8 +44,8 @@ export const Store_SetJoinRoom = (roomCode) => {
 					//cek jika masuk ke room player lain
 					firebaseRefRoom(roomCode).once('value', (snap) => {
 						if (snap.exists()) {
-							const { player } = snap.val()
-							if (Object.keys(player || {}).length > 0) {
+							const { players } = snap.val()
+							if (Object.keys(players || {}).length > 0) {
 								// cek jika pemilik room sudah create room
 								firebaseRefPlayerOnRoom(roomCode, UID).set({
 									username: username,
@@ -104,8 +102,8 @@ export const Store_SetUserJoinRoom = (roomcode) => {
 	return new Promise((resolve, reject) =>
 		firebaseRefRoom(roomcode).once('value', (snap) => {
 			if (snap.exists()) {
-				const { player } = snap.val()
-				if (Object.keys(player || {}).length > 0) {
+				const { players } = snap.val()
+				if (Object.keys(players || {}).length > 0) {
 					firebaseRefPlayerOnRoom(roomcode, UID).set({
 						username: username,
 						user_role: 'participant',
@@ -149,19 +147,18 @@ export const Store_SetUserLeaveRoom = async (id, master, roomcode) =>
 			resolve('ok')
 		}
 	})
-export const firebaseListLeaderboardByInstansi = (key, callback) =>
-	firebaseRefLeaderBoard.child(key)
-	// .on('value', (snap) => {
-	// 	let tmp = []
-	// 	snap.forEach((data) => {
-	// 		tmp.push({
-	// 			...data.val(),
-	// 			id: data.key
-	// 		})
-	// 	})
-	// 	callback(tmp)
-	// }
-	// )
+export const firebaseListLeaderboardByInstansi = (key, callback) => firebaseRefLeaderBoard.child(key)
+// .on('value', (snap) => {
+// 	let tmp = []
+// 	snap.forEach((data) => {
+// 		tmp.push({
+// 			...data.val(),
+// 			id: data.key
+// 		})
+// 	})
+// 	callback(tmp)
+// }
+// )
 export const firebaseListInstansi = (callback) =>
 	firebaseRefListInstansi.on('value', (snap) => {
 		let tmp = []

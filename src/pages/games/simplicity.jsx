@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react'
+import React, { useState, useEffect, memo, useId } from 'react'
 import Countdown from '@/src/components/Countdown'
 import Score from '@/src/components/Score'
 import { IcRegularQuestionSquare } from '@/src/styles/react-icon-svg'
@@ -15,65 +15,44 @@ import randValue from '@/src/utils/randValue'
 import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
 import { motion } from 'framer-motion'
+import { useNavigate, useLocation } from 'react-router-dom'
+import URLS from '@/src/enums/urls'
+import { useStore } from 'react-redux'
+import GAME_GETTERS from '@/src/store/modules/Game/getters'
+import USER_GETTERS from '@/src/store/modules/User/getters'
+import Loader from '@/src/components/Loader'
+import { gameplayDuration } from '@/src/config/config'
+import { firebaseRefRoom } from '@/src/firebase-instance/firebaseRef'
+import { Modal } from 'antd'
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
 dayjs.extend(duration)
-
 const Simplicity = () => {
-	const [isCorrect, setIsCorrect] = useState(undefined)
+	const navigate = useNavigate()
+	const location = useLocation()
+	const store = useStore()
+	const state = store.getState()
+	const soal = GAME_GETTERS.SIMPLICITY_SOAL(state)
+	const UID = USER_GETTERS.UID(state)
+	const endAt = dayjs().add(gameplayDuration, 'ms')
 	const [benar, setBenar] = useState(0)
 	const [salah, setSalah] = useState(0)
-	const [visible, setVisible] = useState(true)
 	const [indexSoal, setIndexSoal] = useState(0)
-	const [endOfCoolDown, setEndOfCoolDown] = useState(undefined)
-	const [endAt, setEndAt] = useState(dayjs().add(30000, 'ms'))
-	const [coolDownTime, setCoolDownTime] = useState(undefined)
+	const [endOfCountDown, setEndOfCountDown] = useState(undefined)
+	const [countDownTime, setCountDownTime] = useState(undefined)
+	const [gameData, setGameData] = useState({})
+	const [roomMasterUID, setRoomMasterUID] = useState('')
 
-	const soal = [
-		{
-			options: [0, 1, 4],
-			question: '1+1',
-			answer: 2
-		},
-		{
-			options: [2, 3, 4],
-			question: '(1+1)/2',
-			answer: 1
-		},
-		{
-			options: [3, 7, 10],
-			question: '5-(1x1)',
-			answer: 4
-		},
-		{
-			options: [2, 5, 6],
-			question: '4/(1-1)',
-			answer: 0
-		},
-		{
-			options: [3, 5, 7],
-			question: '6x2',
-			answer: 12
-		},
-		{
-			options: [2, 17, 60],
-			question: '12-5',
-			answer: 7
-		}
-	]
+
 	const plusPoint = () => {
 		setBenar((prev) => prev + 1)
-		setIsCorrect(true)
-		setVisible((prev) => !prev)
 		randValue(5, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}
 	const minPoint = () => {
 		setSalah((prev) => prev + 1)
-		setIsCorrect(false)
-		setVisible((prev) => !prev)
 	}
 	const check = (val) => {
 		if (val === soal[indexSoal].answer) {
@@ -83,61 +62,109 @@ const Simplicity = () => {
 		}
 	}
 	useEffect(() => {
+		console.log('piye toh6')
+		firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
+			if (snap.exists()) {
+				const { players: resPlayers, room_master, ...other } = snap.val()
+
+				setGameData(other)
+				setRoomMasterUID(room_master)
+			} else {
+				Modal.info({
+					title: 'Room tidak ditemukan!',
+					content: (
+						<div>
+							<p>Room tidak ditemukan!</p>
+						</div>
+					),
+					onOk: () => navigate(URLS.MULTIPLAYER)
+				})
+			}
+		})
 		randValue(5, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}, [])
 	useEffect(() => {
-		var gameCooldown = undefined
 
-		if (endOfCoolDown === undefined) {
-			const gameStartAt = endAt
-			const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
-			setTimeout(() => {
-				setEndOfCoolDown(gameStartAt.subtract(waitTime, 'ms'))
-			}, waitTime)
-		} else {
-			gameCooldown = setInterval(() => {
-				const secondRemaining = endOfCoolDown.diff(dayjs(), 's')
-				if (secondRemaining < 0) {
-					if (getDuration() > 0) {
-						setEndOfCoolDown(dayjs().add(getDuration(), 'ms'))
+		let gameCountDown = undefined
+		if (gameData.game_status === 'playing' && gameData?.current_timeline !== undefined) {
+			if (endOfCountDown === undefined) {
+				const gameEndAt = dayjs(gameData.timeline[gameData.current_timeline].game_start_at).add(gameplayDuration, 'ms')
+				const waitTime = (gameEndAt.diff(dayjs(), 'ms') % 1000) - 1
+				setTimeout(() => {
+					setEndOfCountDown(gameEndAt.subtract(waitTime, 'ms'))
+				}, waitTime)
+			} else {
+				gameCountDown = setInterval(() => {
+					const secondRemaining = endOfCountDown.diff(dayjs(), 's')
+					if (secondRemaining < 0) {
+						if (getDuration() > 0) {
+							setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
+						} else {
+							clearInterval(gameCountDown)
+							firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
+								if (snap.exists) {
+									const room_data = snap.val()
+									console.log('room_data.game_status', room_data.game_status)
+									const numberCurrentTimeline = parseInt(room_data.current_timeline.split('-')[1])
+									console.log(room_data.current_timeline.split('-'))
+									if (room_data.game_status === 'playing' && roomMasterUID === UID) {
+										firebaseRefRoom(location.state.roomCode)
+											.update({ game_status: 'game_start_countdown', current_timeline: `game-${numberCurrentTimeline + 1}` })
+											.then(() => {
+												navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+											})
+									} else {
+										navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+									}
+								}
+							})
+						}
 					} else {
-						clearInterval(gameCooldown)
+						setCountDownTime(secondRemaining)
 					}
-				} else {
-					setCoolDownTime(secondRemaining)
-				}
-			}, 1000)
+				}, 1000)
+			}
 		}
 
-		return () => clearInterval(gameCooldown)
-	}, [endOfCoolDown])
+		return () => clearInterval(gameCountDown)
+	}, [endOfCountDown, gameData])
 
 	const getDuration = () => {
-		return endAt.diff(dayjs(), 'ms')
+		return endOfCountDown.diff(dayjs(), 'ms')
 	}
-
+	// useEffect(() => {
+	// 	if (countDownTime < 1) {
+	// 		navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+	// 	}
+	// }, [countDownTime])
 	return (
 		<div style={ContainerCenterBasic}>
-			<Countdown a={coolDownTime ?? 0} b={30} />
-			<div style={ScoreGame}>
-				<Score a={benar} b={salah} />
-			</div>
-			<motion.div
-				key={benar}
-				style={ChalStyle}
-				initial={{ opacity: 0, scale: 0.5 }}
-				animate={{ opacity: 1, scale: 1 }}
-				transition={{
-					duration: 0.8,
-					delay: 0.2,
-					ease: [0, 0.71, 0.2, 1.01]
-				}}>
-				<span className="prevent-select">{soal[indexSoal].question}=</span>
-				<IcRegularQuestionSquare height={IconSizeQuestion} />
-			</motion.div>
-			<OptionsMemo soal={soal} indexSoal={indexSoal} check={check} salah={salah} />
+			{!!countDownTime ? (
+				<>
+					<Countdown a={countDownTime ?? 0} b={30} />
+					<div style={ScoreGame}>
+						<Score a={benar} b={salah} />
+					</div>
+					<motion.div
+						key={benar}
+						style={ChalStyle}
+						initial={{ opacity: 0, scale: 0.5 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{
+							duration: 0.8,
+							delay: 0.2,
+							ease: [0, 0.71, 0.2, 1.01]
+						}}>
+						<span className="prevent-select">{soal[indexSoal].question}=</span>
+						<IcRegularQuestionSquare height={IconSizeQuestion} />
+					</motion.div>
+					<OptionsMemo soal={soal} indexSoal={indexSoal} check={check} salah={salah} />
+				</>
+			) : (
+				<Loader />
+			)}
 		</div>
 	)
 }

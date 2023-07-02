@@ -1,66 +1,92 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix } from 'antd'
+import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix, Select } from 'antd'
 import { CaretRightOutlined, LeftOutlined, StarOutlined } from '@ant-design/icons'
 import { firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from 'react-redux'
 import USER_GETTERS from '@/src/store/modules/User/getters'
 import Countdown from '@/src/components/Countdown'
 import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
 import '@/src/styles/hideSelectionColumnTable.css'
-import navigateTo from '@/src/utils/navigateTo'
 import { Store_SetJoinRoom, Store_SetUserLeaveRoom } from '@/src/firebase-instance/firebaseActions'
 import URLS from '../enums/urls'
+import { gameplayDuration } from '../config/config'
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
 dayjs.extend(duration)
 let interval
+const modes = [
+	{ value: 'two_times', label: '2x', with_number: 2 },
+	{ value: 'five_times', label: '5x', with_number: 5 },
+	{ value: 'ten_times', label: '10x', with_number: 10 }
+]
+const totalWaitingDuration = 17
 const Room = () => {
-	const totalWaitingDuration = 12
+	const navigate = useNavigate()
+	const location = useLocation()
+	const store = useStore()
+	const state = store.getState()
 	const { id } = useParams()
 	const [players, setPlayers] = useState([])
 	const [roomMasterUID, setRoomMasterUID] = useState('')
 	const [gameData, setGameData] = useState({})
 	const [loading, setLoading] = useState(true)
-	const store = useStore()
-	const state = store.getState()
+	const [mode, setMode] = useState(modes[0].value)
+	const [startLoading, setStartLoading] = useState(false)
 	const UID = USER_GETTERS.UID(state)
 	const [restTime, setRestTime] = useState(0)
-	const [endOfCoolDown, setEndOfCoolDown] = useState(undefined)
-	const [coolDownTime, setCoolDownTime] = useState(undefined)
+	const [endOfCountDown, setEndOfCountDown] = useState(undefined)
+	const [countDownTime, setCountDownTime] = useState(undefined)
 	const handleLeave = () => {
 		Store_SetUserLeaveRoom(UID, roomMasterUID === UID ? 'master' : '', id).finally(() => {
-			navigateTo(URLS.MULTIPLAYER)
+			navigate(URLS.MULTIPLAYER)
 		})
 	}
 	const handleStart = () => {
+		setStartLoading(true)
 		firebaseRefRoom(id)
-			.update({ playing: 'true', started_at: firebaseTimestamp })
+			.update({ started_at: firebaseTimestamp, game_status: 'game_start_countdown', mode })
 			.then(() => {
 				firebaseRefRoom(id)
 					.child('started_at')
 					.once('value', (snap) => {
-						const gameStartAt = dayjs(snap.val()).add(12000, 'ms').valueOf()
-						firebaseRefRoom(id).child('game_start_at').set(gameStartAt)
+						const gameStartAt = dayjs(snap.val())
+							.add(totalWaitingDuration * 1000, 'ms')
+							.valueOf()
+						const timeline = Array.from(Array(modes.find((item) => item.value === mode).with_number).keys()).map((value) => ({
+							name: `game-${value + 1}`,
+							game_start_at: dayjs(snap.val())
+								.add(totalWaitingDuration * 1000 + value * (totalWaitingDuration * 1000 + gameplayDuration), 'ms')
+								.valueOf()
+						}))
+						const timelineObj = timeline.reduce((carry, v) => ({ ...carry, [v.name]: v }), {})
+						firebaseRefRoom(id).update({
+							game_start_at: gameStartAt,
+							timeline: timelineObj,
+							current_timeline: 'game-1'
+						})
 					})
+			})
+			.finally(() => {
+				setStartLoading(false)
 			})
 	}
 	useEffect(() => {
-		Store_SetJoinRoom(id)
+		Store_SetJoinRoom(id, location.state?.gameFrom)
 			.then((res) => {
 				if (res === 'ok') {
 					firebaseRefRoom(id).on('value', (snap) => {
 						if (snap.exists()) {
-							const { player, room_master, ...other } = snap.val()
+							const { players: resPlayers, room_master, ...other } = snap.val()
 							setRoomMasterUID(room_master)
 							if (!isEqual(other, gameData)) {
 								setGameData(other)
 							}
 							setPlayers(
-								Object.keys(player || {})
-									.map((key) => player[key])
+								Object.keys(resPlayers || {})
+									.map((key) => resPlayers[key])
 									.sort((a, b) => (b.user_role === 'master') - (a.user_role === 'master'))
 							)
 						} else {
@@ -71,7 +97,7 @@ const Room = () => {
 										<p>Room tidak ditemukan!</p>
 									</div>
 								),
-								onOk: () => navigateTo(URLS.MULTIPLAYER)
+								onOk: () => navigate(URLS.MULTIPLAYER)
 							})
 						}
 						setLoading(false)
@@ -87,7 +113,7 @@ const Room = () => {
 								<p>{err.message}</p>
 							</div>
 						),
-						onOk: () => navigateTo(URLS.MULTIPLAYER)
+						onOk: () => navigate(URLS.MULTIPLAYER)
 					})
 				}
 			})
@@ -97,8 +123,6 @@ const Room = () => {
 		}, 1000)
 		return () => {
 			// on unmount
-			console.log('unmount room', id)
-
 			firebaseRefRoom(id).off()
 		}
 	}, [])
@@ -109,33 +133,54 @@ const Room = () => {
 	}, [restTime])
 	useEffect(() => {
 		var countDown = undefined
-		if (gameData.playing === 'true' && gameData?.game_start_at !== undefined) {
-			if (endOfCoolDown === undefined) {
-				const gameStartAt = dayjs(gameData.game_start_at)
-				const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
-				setTimeout(() => {
-					setEndOfCoolDown(gameStartAt.subtract(waitTime, 'ms'))
-				}, waitTime)
-			} else {
-				countDown = setInterval(() => {
-					const secondRemaining = endOfCoolDown.diff(dayjs(), 's')
-					if (secondRemaining < 0) {
-						if (getDuration() > 0) {
-							setEndOfCoolDown(dayjs().add(getDuration(), 'ms'))
+		if (gameData.game_status === 'game_start_countdown' && !!gameData?.current_timeline) {
+			const currentTimelinePosition = Object.keys(gameData.timeline).indexOf(gameData.current_timeline)
+			const maxGameTimeline = modes.find((item) => item.value === gameData.mode).with_number
+			console.log(currentTimelinePosition, maxGameTimeline)
+			if (currentTimelinePosition !== -1 && currentTimelinePosition < maxGameTimeline) {
+				if (endOfCountDown === undefined) {
+					const gameStartAt = dayjs(gameData.timeline[gameData.current_timeline].game_start_at)
+					const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
+					// console.log('waitTime',waitTime)
+					setTimeout(() => {
+						setEndOfCountDown(gameStartAt.subtract(waitTime, 'ms'))
+					}, waitTime)
+				} else {
+					countDown = setInterval(() => {
+						const secondRemaining = endOfCountDown.diff(dayjs(), 's')
+						if (secondRemaining < 0) {
+							if (getDuration() > 0) {
+								setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
+							} else {
+								// console.log('countdown end')
+								clearInterval(countDown)
+								if (UID === roomMasterUID) {
+									firebaseRefRoom(id).update({ game_status: 'playing' })
+								}
+								console.log('ke simplicity', secondRemaining, getDuration())
+								navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
+							}
 						} else {
-							clearInterval(countDown)
+							setCountDownTime(secondRemaining)
 						}
-					} else {
-						setCoolDownTime(secondRemaining)
-					}
-				}, 1000)
+					}, 1000)
+				}
+			} else {
+				if (UID === roomMasterUID) {
+					firebaseRefRoom(id).update({ game_status: 'waiting', current_timeline: '' })
+				}
 			}
 		}
-
 		return () => clearInterval(countDown)
-	}, [endOfCoolDown, gameData])
+	}, [endOfCountDown, gameData])
+	// useEffect(() => {
+	// 	console.log('gameData.game_status', gameData.game_status)
+	// 	if (gameData.game_status === 'playing') {
+	// 		navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
+	// 	}
+	// }, [gameData.game_status])
 	const getDuration = () => {
-		return dayjs(gameData.game_start_at).diff(dayjs(), 'ms')
+		return dayjs(gameData.timeline[gameData.current_timeline].game_start_at).diff(dayjs(), 'ms')
 	}
 	return (
 		<div>
@@ -145,18 +190,29 @@ const Room = () => {
 						Leave
 					</Button>
 					<div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end' }}>
-						{UID === roomMasterUID && !(gameData.playing === 'true' && coolDownTime > 0) && (
-							<Button icon={<CaretRightOutlined />} onClick={handleStart}>
-								Start
-							</Button>
+						{UID === roomMasterUID && !(gameData.game_status === 'game_start_countdown' && countDownTime > 0) && (
+							<Space>
+								<Select
+									value={mode}
+									onChange={setMode}
+									placeholder="modes"
+									options={[
+										{ value: 'two_times', label: '2x' },
+										{ value: 'five_times', label: '5x' },
+										{ value: 'ten_times', label: '10x' }
+									]}
+								/>
+								<Button icon={<CaretRightOutlined />} onClick={handleStart} loading={startLoading}>
+									Start
+								</Button>
+							</Space>
 						)}
-						{gameData.playing === 'true' && coolDownTime > 0 && (
-							<Countdown onRest={true} a={coolDownTime || 0} b={totalWaitingDuration - 1} />
+						{gameData.game_status === 'game_start_countdown' && countDownTime > 0 && (
+							<Countdown onRest={true} a={countDownTime || 0} b={totalWaitingDuration - 1} />
 						)}
 					</div>
 				</div>
 			</Affix>
-
 			<Table
 				rowKey="uid"
 				loading={loading}
@@ -168,7 +224,7 @@ const Room = () => {
 						render: (value, rowValues, index) => (
 							<Space>
 								<Avatar src={rowValues.imageProfile} />
-								{rowValues.uid === roomMasterUID ? (
+								{rowValues.user_role === 'master' ? (
 									<>
 										<Tag bordered={false} color="warning">
 											<StarOutlined />

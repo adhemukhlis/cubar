@@ -85,9 +85,7 @@ const Leaderboard = () => {
 		})
 	}
 
-	const onFilterBoardSearch = (value) => {
-		// setLeaderboardState((prev) => ({ ...prev, leaderboardFilter: value }))
-	}
+
 	return isLoading ? (
 		<div style={{ minHeight: '100vh' }}>
 			<Loader />
@@ -108,7 +106,7 @@ const Leaderboard = () => {
 					</div>
 				</Affix>
 				<Row style={{ marginBottom: '2rem', gap: '10' }}>
-					<Col {...{ xs: 24, sm: 4, md: 4, lg: 4, lg: 4 }}>
+					<Col {...{ xs: 24, sm: 4, md: 4, lg: 4 }}>
 						<Select
 							style={{ width: '100%' }}
 							size="large"
@@ -117,7 +115,6 @@ const Leaderboard = () => {
 							placeholder="Select a person"
 							optionFilterProp="children"
 							onChange={onFilterBoardChange}
-							onSearch={onFilterBoardSearch}
 							filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
 							options={listInstansiOptions}
 						/>
