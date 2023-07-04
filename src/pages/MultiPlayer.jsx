@@ -1,12 +1,15 @@
 import React, { useState, useEffect, Fragment } from 'react'
 import { Store_SetUserJoinRoom, Store_SetUserCreateRoom } from '@/src/firebase-instance/firebaseActions'
 import { Col, Row, Input, Form, Divider, Button, Modal } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { LeftOutlined, PlusOutlined } from '@ant-design/icons'
 import Loader from '@/src/components/Loader'
 import navigateTo from '../utils/navigateTo'
+import { useNavigate } from 'react-router-dom'
+import URLS from '../enums/urls'
 
 const { Item } = Form
 const MultiPlayer = () => {
+	const navigate = useNavigate()
 	const [roomCode, setRoomCode] = useState('')
 	const [isLoading, setIsLoading] = useState(true)
 	const [createRoomLoading, setCreateRoomLoading] = useState(false)
@@ -41,6 +44,9 @@ const MultiPlayer = () => {
 		}
 		return Promise.reject(new Error('isi Roomcode'))
 	}
+	const handleBack = () => {
+		navigate(URLS.MENU)
+	}
 	useEffect(() => {
 		console.log('multiplayer useEffect')
 		setIsLoading(false)
@@ -49,6 +55,11 @@ const MultiPlayer = () => {
 		<Loader style={{ minHeight: '100vh' }} />
 	) : (
 		<Fragment>
+			<div style={{ display: 'flex', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.6)' }}>
+				<Button icon={<LeftOutlined />} onClick={handleBack}>
+					Menu
+				</Button>
+			</div>
 			<div
 				style={{
 					backgroundColor: '#fafafa',

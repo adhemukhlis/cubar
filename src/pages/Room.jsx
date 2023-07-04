@@ -136,7 +136,6 @@ const Room = () => {
 		if (gameData.game_status === 'game_start_countdown' && !!gameData?.current_timeline) {
 			const currentTimelinePosition = Object.keys(gameData.timeline).indexOf(gameData.current_timeline)
 			const maxGameTimeline = modes.find((item) => item.value === gameData.mode).with_number
-			console.log(currentTimelinePosition, maxGameTimeline)
 			if (currentTimelinePosition !== -1 && currentTimelinePosition < maxGameTimeline) {
 				if (endOfCountDown === undefined) {
 					const gameStartAt = dayjs(gameData.timeline[gameData.current_timeline].game_start_at)
@@ -157,7 +156,6 @@ const Room = () => {
 								if (UID === roomMasterUID) {
 									firebaseRefRoom(id).update({ game_status: 'playing' })
 								}
-								console.log('ke simplicity', secondRemaining, getDuration())
 								navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
 							}
 						} else {

@@ -17,22 +17,21 @@ export const Store_OffLogin = (uid) => {
 }
 
 export const Store_SetJoinRoom = (roomCode, gameFrom) => {
-	console.log(gameFrom)
 	const UID = USER_GETTERS.UID(store.getState())
 	const username = USER_GETTERS.username(store.getState())
 	const imageProfile = USER_GETTERS.imageProfile(store.getState())
 	return new Promise((resolve, reject) =>
-		firebaseRefRoomCode(UID).once('value', (snap) => {
-			if (snap.exists()) {
-				if (snap.val() === roomCode) {
+		firebaseRefRoomCode(UID).once('value', (playerRoomCode) => {
+			if (playerRoomCode.exists()) {
+				if (playerRoomCode.val() === roomCode) {
 					// cek jika player memasuki room miliknya
 					console.log('Store_SetJoinRoom')
-					firebaseRefRoom(snap.val()).update({
-						roomcode: snap.val(),
+					firebaseRefRoom(roomCode).update({
+						roomcode: roomCode,
 						room_master: UID,
 						...(gameFrom === undefined ? { game_status: 'waiting' } : {})
 					})
-					firebaseRefPlayerOnRoom(snap.val(), UID).set({
+					firebaseRefPlayerOnRoom(roomCode, UID).set({
 						playing: false,
 						username: username,
 						user_role: 'master',
@@ -42,24 +41,16 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 					resolve('ok')
 				} else {
 					//cek jika masuk ke room player lain
-					firebaseRefRoom(roomCode).once('value', (snap) => {
-						if (snap.exists()) {
-							const { players } = snap.val()
-							if (Object.keys(players || {}).length > 0) {
-								// cek jika pemilik room sudah create room
-								firebaseRefPlayerOnRoom(roomCode, UID).set({
-									username: username,
-									user_role: 'participant',
-									uid: UID,
-									imageProfile: imageProfile
+					firebaseRefRoom(roomCode).once('value', (playerRoomData) => {
+						if (playerRoomData.exists()) {
+							const { players } = playerRoomData.val()
+							joinRoomParticipant({ players, roomCode, UID, username, imageProfile })
+								.then((res) => {
+									resolve(res)
 								})
-								resolve('ok')
-							} else {
-								reject({
-									statusCode: 404,
-									message: `Room ${roomCode} belum dibuat`
+								.catch((err) => {
+									reject(err)
 								})
-							}
 						} else {
 							reject({
 								statusCode: 404,
@@ -69,14 +60,47 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 					})
 				}
 			} else {
-				reject({
-					statusCode: 404,
-					message: `Room ${roomCode} tidak ditemukan`
+				firebaseRefRoom(roomCode).once('value', (playerRoomData) => {
+					if (playerRoomData.exists()) {
+						const { players } = playerRoomData.val()
+						joinRoomParticipant({ players, roomCode, UID, username, imageProfile })
+							.then((res) => {
+								resolve(res)
+							})
+							.catch((err) => {
+								reject(err)
+							})
+					} else {
+						reject({
+							statusCode: 404,
+							message: `Room ${roomCode} tidak ditemukan`
+						})
+					}
 				})
 			}
 		})
 	)
 }
+
+const joinRoomParticipant = ({ players, roomCode, UID, username, imageProfile }) =>
+	new Promise((resolve, reject) => {
+		if (Object.keys(players || {}).length > 0) {
+			// cek jika pemilik room sudah create room
+			firebaseRefPlayerOnRoom(roomCode, UID).set({
+				username: username,
+				user_role: 'participant',
+				uid: UID,
+				imageProfile: imageProfile
+			})
+			resolve('ok')
+		} else {
+			reject({
+				statusCode: 404,
+				message: `Room ${roomCode} belum dibuat`
+			})
+		}
+	})
+
 
 export const Store_SetUserCreateRoom = () => {
 	const UID = USER_GETTERS.UID(store.getState())

@@ -22,7 +22,7 @@ import GAME_GETTERS from '@/src/store/modules/Game/getters'
 import USER_GETTERS from '@/src/store/modules/User/getters'
 import Loader from '@/src/components/Loader'
 import { gameplayDuration } from '@/src/config/config'
-import { firebaseRefRoom } from '@/src/firebase-instance/firebaseRef'
+import { firebaseRefPlayerOnRoom, firebaseRefRoom } from '@/src/firebase-instance/firebaseRef'
 import { Modal } from 'antd'
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
@@ -42,7 +42,6 @@ const Simplicity = () => {
 	const [countDownTime, setCountDownTime] = useState(undefined)
 	const [gameData, setGameData] = useState({})
 	const [roomMasterUID, setRoomMasterUID] = useState('')
-
 
 	const plusPoint = () => {
 		setBenar((prev) => prev + 1)
@@ -103,17 +102,29 @@ const Simplicity = () => {
 							firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
 								if (snap.exists) {
 									const room_data = snap.val()
-									console.log('room_data.game_status', room_data.game_status)
 									const numberCurrentTimeline = parseInt(room_data.current_timeline.split('-')[1])
-									console.log(room_data.current_timeline.split('-'))
 									if (room_data.game_status === 'playing' && roomMasterUID === UID) {
 										firebaseRefRoom(location.state.roomCode)
 											.update({ game_status: 'game_start_countdown', current_timeline: `game-${numberCurrentTimeline + 1}` })
 											.then(() => {
-												navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+												firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
+													const data = playerData.val()
+													firebaseRefPlayerOnRoom(location.state.roomCode, UID)
+														.update({ salah: data?.salah + salah, benar: data?.benar + benar })
+														.finally(() => {
+															navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+														})
+												})
 											})
 									} else {
-										navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+										firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
+											const data = playerData.val()
+											firebaseRefPlayerOnRoom(location.state.roomCode, UID)
+												.update({ salah: data?.salah + salah, benar: data?.benar + benar })
+												.finally(() => {
+													navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+												})
+										})
 									}
 								}
 							})
