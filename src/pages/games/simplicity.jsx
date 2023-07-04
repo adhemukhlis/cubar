@@ -63,7 +63,6 @@ const Simplicity = () => {
 		firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
 			if (snap.exists()) {
 				const { players, room_master, ...other } = snap.val()
-
 				setGameData(other)
 				setRoomMasterUID(room_master)
 			} else {

@@ -35,6 +35,9 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 						playing: false,
 						username: username,
 						user_role: 'master',
+						salah: 0,
+						benar: 0,
+						score: 0,
 						uid: UID,
 						imageProfile: imageProfile
 					})
@@ -87,10 +90,14 @@ const joinRoomParticipant = ({ players, roomCode, UID, username, imageProfile })
 		if (Object.keys(players || {}).length > 0) {
 			// cek jika pemilik room sudah create room
 			firebaseRefPlayerOnRoom(roomCode, UID).set({
+				playing: false,
 				username: username,
 				user_role: 'participant',
 				uid: UID,
-				imageProfile: imageProfile
+				imageProfile: imageProfile,
+				salah: 0,
+				benar: 0,
+				score: 0
 			})
 			resolve('ok')
 		} else {
@@ -100,7 +107,6 @@ const joinRoomParticipant = ({ players, roomCode, UID, username, imageProfile })
 			})
 		}
 	})
-
 
 export const Store_SetUserCreateRoom = () => {
 	const UID = USER_GETTERS.UID(store.getState())
