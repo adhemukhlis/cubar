@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 import { ProfileContainer, GridContainer, UsernameMenuText } from '@/src/styles/styles'
 import URLS from '@/src/enums/urls'
 import { IcRegularSwords, IcRegularCrown } from '@/src/styles/react-icon-svg'
 import ControlMenu from '@/src/components/ControlMenu'
-import DrawerMenu from '@/src/components/DrawerMenu'
-import { Avatar, Button, Col, Drawer, FloatButton, Form, Input, Modal, Row } from 'antd'
+import { Avatar, Button, Col,  FloatButton, Form, Input, Modal, Row } from 'antd'
 import { useDispatch, useStore } from 'react-redux'
 import USER_GETTERS from '@/src/store/modules/User/getters'
-import { LogoutOutlined, MenuOutlined, MoreOutlined, SettingOutlined, UsergroupAddOutlined } from '@ant-design/icons'
+import { ExpandOutlined,  MenuOutlined,  SettingOutlined,  } from '@ant-design/icons'
 import AUTH_ACTIONS from '@/src/store/modules/Auth/actions'
 import ACTION_TYPES from '@/src/store/types/action-types'
 import { firebaseRefPlayerSupportData, rootRef } from '../firebase-instance/firebaseRef'
+import { openFullScreen } from '../utils/fullscreen'
 
 const Menu = () => {
 	const store = useStore()
@@ -66,6 +66,9 @@ const Menu = () => {
 				</ControlMenu>
 			</div>
 			<FloatButton.Group trigger="click" shape="circle" style={{ right: 16 }} icon={<MenuOutlined />}>
+			<FloatButton
+					icon={<ExpandOutlined />}
+					onClick={openFullScreen}/>
 				<FloatButton
 					icon={<SettingOutlined />}
 					onClick={() => {

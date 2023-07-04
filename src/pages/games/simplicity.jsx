@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useId } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 import Countdown from '@/src/components/Countdown'
 import Score from '@/src/components/Score'
 import { IcRegularQuestionSquare } from '@/src/styles/react-icon-svg'
@@ -35,7 +35,6 @@ const Simplicity = () => {
 	const state = store.getState()
 	const soal = GAME_GETTERS.SIMPLICITY_SOAL(state)
 	const UID = USER_GETTERS.UID(state)
-	const endAt = dayjs().add(gameplayDuration, 'ms')
 	const [benar, setBenar] = useState(0)
 	const [salah, setSalah] = useState(0)
 	const [indexSoal, setIndexSoal] = useState(0)
@@ -62,10 +61,9 @@ const Simplicity = () => {
 		}
 	}
 	useEffect(() => {
-		console.log('piye toh6')
 		firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
 			if (snap.exists()) {
-				const { players: resPlayers, room_master, ...other } = snap.val()
+				const { players, room_master, ...other } = snap.val()
 
 				setGameData(other)
 				setRoomMasterUID(room_master)
@@ -86,7 +84,6 @@ const Simplicity = () => {
 		})
 	}, [])
 	useEffect(() => {
-
 		let gameCountDown = undefined
 		if (gameData.game_status === 'playing' && gameData?.current_timeline !== undefined) {
 			if (endOfCountDown === undefined) {
