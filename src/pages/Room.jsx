@@ -88,6 +88,7 @@ const Room = () => {
 								Object.keys(resPlayers || {})
 									.map((key) => resPlayers[key])
 									.sort((a, b) => (b.user_role === 'master') - (a.user_role === 'master'))
+									.sort((a, b) => (b?.score || 0) - (a?.score || 0))
 							)
 						} else {
 							Modal.info({
@@ -133,7 +134,7 @@ const Room = () => {
 	}, [restTime])
 	useEffect(() => {
 		var countDown = undefined
-		if (gameData.game_status === 'game_start_countdown' && !!gameData?.current_timeline) {
+		if (!!gameData?.current_timeline) {
 			const currentTimelinePosition = Object.keys(gameData.timeline).indexOf(gameData.current_timeline)
 			const maxGameTimeline = modes.find((item) => item.value === gameData.mode).with_number
 			if (currentTimelinePosition !== -1 && currentTimelinePosition < maxGameTimeline) {
@@ -151,7 +152,6 @@ const Room = () => {
 							if (getDuration() > 0) {
 								setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
 							} else {
-								// console.log('countdown end')
 								clearInterval(countDown)
 								if (UID === roomMasterUID) {
 									firebaseRefRoom(id).update({ game_status: 'playing' })
@@ -234,6 +234,10 @@ const Room = () => {
 								)}
 							</Space>
 						)
+					},
+					{
+						dataIndex: 'score',
+						title: 'Score'
 					}
 				]}
 				dataSource={players}

@@ -91,8 +91,6 @@ export default {
 		}
 	},
 	[ACTION_TYPES.AUTH_CHECK]() {
-
-		console.log('load check')
 		return async (dispatch, state) => {
 			const uid = AUTH_GETTERS.uid(state())
 			const utoken = AUTH_GETTERS.loginToken(state())

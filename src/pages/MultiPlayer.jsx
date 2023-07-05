@@ -48,7 +48,6 @@ const MultiPlayer = () => {
 		navigate(URLS.MENU)
 	}
 	useEffect(() => {
-		console.log('multiplayer useEffect')
 		setIsLoading(false)
 	}, [])
 	return isLoading ? (

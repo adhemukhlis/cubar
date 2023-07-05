@@ -83,7 +83,7 @@ const Simplicity = () => {
 	}, [])
 	useEffect(() => {
 		let gameCountDown = undefined
-		if (gameData.game_status === 'playing' && gameData?.current_timeline !== undefined) {
+		if (gameData?.current_timeline !== undefined) {
 			if (endOfCountDown === undefined) {
 				const gameEndAt = dayjs(gameData.timeline[gameData.current_timeline].game_start_at).add(gameplayDuration, 'ms')
 				const waitTime = (gameEndAt.diff(dayjs(), 'ms') % 1000) - 1
@@ -109,7 +109,11 @@ const Simplicity = () => {
 												firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
 													const data = playerData.val()
 													firebaseRefPlayerOnRoom(location.state.roomCode, UID)
-														.update({ salah: data?.salah + salah, benar: data?.benar + benar })
+														.update({
+															salah: (data?.salah || 0) + salah,
+															benar: (data?.benar || 0) + benar,
+															score: (data?.score || 0) + (benar - salah)
+														})
 														.finally(() => {
 															navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
 														})
@@ -119,7 +123,11 @@ const Simplicity = () => {
 										firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
 											const data = playerData.val()
 											firebaseRefPlayerOnRoom(location.state.roomCode, UID)
-												.update({ salah: data?.salah + salah, benar: data?.benar + benar })
+												.update({
+													salah: (data?.salah || 0) + salah,
+													benar: (data?.benar || 0) + benar,
+													score: (data?.score || 0) + (benar - salah)
+												})
 												.finally(() => {
 													navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
 												})
@@ -136,7 +144,7 @@ const Simplicity = () => {
 		}
 
 		return () => clearInterval(gameCountDown)
-	}, [endOfCountDown, gameData])
+	}, [endOfCountDown, gameData, salah, benar])
 
 	const getDuration = () => {
 		return endOfCountDown.diff(dayjs(), 'ms')

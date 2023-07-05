@@ -25,21 +25,18 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 			if (playerRoomCode.exists()) {
 				if (playerRoomCode.val() === roomCode) {
 					// cek jika player memasuki room miliknya
-					console.log('Store_SetJoinRoom')
 					firebaseRefRoom(roomCode).update({
 						roomcode: roomCode,
 						room_master: UID,
 						...(gameFrom === undefined ? { game_status: 'waiting' } : {})
 					})
-					firebaseRefPlayerOnRoom(roomCode, UID).set({
+					firebaseRefPlayerOnRoom(roomCode, UID).update({
 						playing: false,
 						username: username,
 						user_role: 'master',
-						salah: 0,
-						benar: 0,
-						score: 0,
 						uid: UID,
-						imageProfile: imageProfile
+						imageProfile: imageProfile,
+						...(gameFrom === undefined ? { salah: 0, benar: 0, score: 0 } : {})
 					})
 					resolve('ok')
 				} else {
@@ -47,7 +44,7 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 					firebaseRefRoom(roomCode).once('value', (playerRoomData) => {
 						if (playerRoomData.exists()) {
 							const { players } = playerRoomData.val()
-							joinRoomParticipant({ players, roomCode, UID, username, imageProfile })
+							joinRoomParticipant({ players, roomCode, UID, username, imageProfile, gameFrom })
 								.then((res) => {
 									resolve(res)
 								})
@@ -66,7 +63,7 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 				firebaseRefRoom(roomCode).once('value', (playerRoomData) => {
 					if (playerRoomData.exists()) {
 						const { players } = playerRoomData.val()
-						joinRoomParticipant({ players, roomCode, UID, username, imageProfile })
+						joinRoomParticipant({ players, roomCode, UID, username, imageProfile, gameFrom })
 							.then((res) => {
 								resolve(res)
 							})
@@ -85,19 +82,17 @@ export const Store_SetJoinRoom = (roomCode, gameFrom) => {
 	)
 }
 
-const joinRoomParticipant = ({ players, roomCode, UID, username, imageProfile }) =>
+const joinRoomParticipant = ({ players, roomCode, UID, username, imageProfile, gameFrom }) =>
 	new Promise((resolve, reject) => {
 		if (Object.keys(players || {}).length > 0) {
 			// cek jika pemilik room sudah create room
-			firebaseRefPlayerOnRoom(roomCode, UID).set({
+			firebaseRefPlayerOnRoom(roomCode, UID).update({
 				playing: false,
 				username: username,
 				user_role: 'participant',
 				uid: UID,
 				imageProfile: imageProfile,
-				salah: 0,
-				benar: 0,
-				score: 0
+				...(gameFrom === undefined ? { salah: 0, benar: 0, score: 0 } : {})
 			})
 			resolve('ok')
 		} else {
