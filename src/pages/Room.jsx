@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix, Select } from 'antd'
 import { CaretRightOutlined, LeftOutlined, StarOutlined } from '@ant-design/icons'
-import { firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
+import { firebaseRefPlayerOnRoom, firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from 'react-redux'
 import USER_GETTERS from '@/src/store/modules/User/getters'
@@ -79,8 +79,17 @@ const Room = () => {
 				if (res === 'ok') {
 					firebaseRefRoom(id).on('value', (snap) => {
 						if (snap.exists()) {
+							console.log('room data', snap.val())
 							const { players: resPlayers, room_master, ...other } = snap.val()
 							setRoomMasterUID(room_master)
+							if (other.current_timeline === 'game-1') {
+								console.log('reset score to 0')
+								firebaseRefPlayerOnRoom(id, UID).update({
+									salah: 0,
+									benar: 0,
+									score: 0
+								})
+							}
 							if (!isEqual(other, gameData)) {
 								setGameData(other)
 							}
@@ -147,20 +156,26 @@ const Room = () => {
 					}, waitTime)
 				} else {
 					countDown = setInterval(() => {
-						const secondRemaining = endOfCountDown.diff(dayjs(), 's')
-						if (secondRemaining < 0) {
-							if (getDuration() > 0) {
-								setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
-							} else {
-								clearInterval(countDown)
-								if (UID === roomMasterUID) {
-									firebaseRefRoom(id).update({ game_status: 'playing' })
+						const waitTime = (endOfCountDown.diff(dayjs(), 'ms') % 1000) - 1
+						const secondRemaining = endOfCountDown.subtract(waitTime, 'ms').diff(dayjs(), 's')
+						console.log(waitTime)
+						setTimeout(() => {
+							console.log('condown interval', secondRemaining)
+							if (secondRemaining < 1) {
+								if (getDuration() > 0) {
+									setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
+								} else {
+									clearInterval(countDown)
+									if (UID === roomMasterUID) {
+										firebaseRefRoom(id).update({ game_status: 'playing' })
+									}
+									navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
 								}
-								navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
+							} else {
+								console.log('countdown', secondRemaining)
+								setCountDownTime(secondRemaining)
 							}
-						} else {
-							setCountDownTime(secondRemaining)
-						}
+						}, waitTime)
 					}, 1000)
 				}
 			} else {

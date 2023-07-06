@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
 html {
-    height: fill-available;
-    height: -webkit-fill-available;
+	height: fill-available;
+	height: -webkit-fill-available;
 }
 body {
 	margin: 0;
@@ -12,8 +12,8 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-tap-highlight-color: transparent;
 	min-height: 100vh;
-        min-height: fill-available;
-        min-height: -webkit-fill-available;
+	min-height: fill-available;
+	min-height: -webkit-fill-available;
 }
 span,
 h1,
@@ -30,7 +30,7 @@ code {
 	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 .prevent-select {
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
 }

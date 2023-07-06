@@ -4,10 +4,10 @@ import { ProfileContainer, GridContainer, UsernameMenuText } from '@/src/styles/
 import URLS from '@/src/enums/urls'
 import { IcRegularSwords, IcRegularCrown } from '@/src/styles/react-icon-svg'
 import ControlMenu from '@/src/components/ControlMenu'
-import { Avatar, Button, Col,  FloatButton, Form, Input, Modal, Row } from 'antd'
+import { Avatar, Button, Col, FloatButton, Form, Input, Modal, Row } from 'antd'
 import { useDispatch, useStore } from 'react-redux'
 import USER_GETTERS from '@/src/store/modules/User/getters'
-import { ExpandOutlined,  MenuOutlined,  SettingOutlined,  } from '@ant-design/icons'
+import { ExpandOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons'
 import AUTH_ACTIONS from '@/src/store/modules/Auth/actions'
 import ACTION_TYPES from '@/src/store/types/action-types'
 import { firebaseRefPlayerSupportData, rootRef } from '../firebase-instance/firebaseRef'
@@ -66,9 +66,7 @@ const Menu = () => {
 				</ControlMenu>
 			</div>
 			<FloatButton.Group trigger="click" shape="circle" style={{ right: 16 }} icon={<MenuOutlined />}>
-			<FloatButton
-					icon={<ExpandOutlined />}
-					onClick={openFullScreen}/>
+				<FloatButton icon={<ExpandOutlined />} onClick={openFullScreen} />
 				<FloatButton
 					icon={<SettingOutlined />}
 					onClick={() => {

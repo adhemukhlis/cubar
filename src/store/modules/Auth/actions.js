@@ -7,7 +7,6 @@ import URLS from '@/src/enums/urls'
 import AUTH_GETTERS from './getters'
 import navigateTo from '@/src/utils/navigateTo'
 import { googleLogout } from '@react-oauth/google'
-import { Store_OffLogin } from '@/src/firebase-instance/firebaseActions'
 
 /**
  * berisi perintah untuk integrasi ke backend rest api

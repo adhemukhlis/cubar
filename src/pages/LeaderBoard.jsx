@@ -85,7 +85,6 @@ const Leaderboard = () => {
 		})
 	}
 
-
 	return isLoading ? (
 		<div style={{ minHeight: '100vh' }}>
 			<Loader />

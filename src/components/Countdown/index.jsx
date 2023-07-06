@@ -16,7 +16,7 @@ const Countdown = ({ a, b, onRest }) => {
 	return (
 		<div style={onRest ? { width: '60px' } : CountdownGame}>
 			<div style={CountdownText}>
-				<span style={{ fontSize: '24px' }}>{a }</span>
+				<span style={{ fontSize: '24px' }}>{a}</span>
 			</div>
 			<Doughnut
 				height={60}

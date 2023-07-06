@@ -92,53 +92,56 @@ const Simplicity = () => {
 				}, waitTime)
 			} else {
 				gameCountDown = setInterval(() => {
-					const secondRemaining = endOfCountDown.diff(dayjs(), 's')
-					if (secondRemaining < 0) {
-						if (getDuration() > 0) {
-							setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
-						} else {
-							clearInterval(gameCountDown)
-							firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
-								if (snap.exists) {
-									const room_data = snap.val()
-									const numberCurrentTimeline = parseInt(room_data.current_timeline.split('-')[1])
-									if (room_data.game_status === 'playing' && roomMasterUID === UID) {
-										firebaseRefRoom(location.state.roomCode)
-											.update({ game_status: 'game_start_countdown', current_timeline: `game-${numberCurrentTimeline + 1}` })
-											.then(() => {
-												firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
-													const data = playerData.val()
-													firebaseRefPlayerOnRoom(location.state.roomCode, UID)
-														.update({
-															salah: (data?.salah || 0) + salah,
-															benar: (data?.benar || 0) + benar,
-															score: (data?.score || 0) + (benar - salah)
-														})
-														.finally(() => {
-															navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
-														})
+					const waitTime = (endOfCountDown.diff(dayjs(), 'ms') % 1000) - 1
+					const secondRemaining = endOfCountDown.subtract(waitTime, 'ms').diff(dayjs(), 's')
+					setTimeout(() => {
+						if (secondRemaining < 0) {
+							if (getDuration() > 0) {
+								setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
+							} else {
+								clearInterval(gameCountDown)
+								firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
+									if (snap.exists) {
+										const room_data = snap.val()
+										const numberCurrentTimeline = parseInt(room_data.current_timeline.split('-')[1])
+										if (room_data.game_status === 'playing' && roomMasterUID === UID) {
+											firebaseRefRoom(location.state.roomCode)
+												.update({ game_status: 'game_start_countdown', current_timeline: `game-${numberCurrentTimeline + 1}` })
+												.then(() => {
+													firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
+														const data = playerData.val()
+														firebaseRefPlayerOnRoom(location.state.roomCode, UID)
+															.update({
+																salah: (data?.salah || 0) + salah,
+																benar: (data?.benar || 0) + benar,
+																score: (data?.score || 0) + (benar - salah)
+															})
+															.finally(() => {
+																navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+															})
+													})
 												})
+										} else {
+											firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
+												const data = playerData.val()
+												firebaseRefPlayerOnRoom(location.state.roomCode, UID)
+													.update({
+														salah: (data?.salah || 0) + salah,
+														benar: (data?.benar || 0) + benar,
+														score: (data?.score || 0) + (benar - salah)
+													})
+													.finally(() => {
+														navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
+													})
 											})
-									} else {
-										firebaseRefPlayerOnRoom(location.state.roomCode, UID).once('value', (playerData) => {
-											const data = playerData.val()
-											firebaseRefPlayerOnRoom(location.state.roomCode, UID)
-												.update({
-													salah: (data?.salah || 0) + salah,
-													benar: (data?.benar || 0) + benar,
-													score: (data?.score || 0) + (benar - salah)
-												})
-												.finally(() => {
-													navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
-												})
-										})
+										}
 									}
-								}
-							})
+								})
+							}
+						} else {
+							setCountDownTime(secondRemaining)
 						}
-					} else {
-						setCountDownTime(secondRemaining)
-					}
+					}, waitTime)
 				}, 1000)
 			}
 		}
@@ -158,7 +161,7 @@ const Simplicity = () => {
 		<div style={ContainerCenterBasic}>
 			{!!countDownTime ? (
 				<>
-					<Countdown a={countDownTime ?? 0} b={30} />
+					<Countdown a={countDownTime ?? 0} b={gameplayDuration / 1000 - 1} />
 					<div style={ScoreGame}>
 						<Score a={benar} b={salah} />
 					</div>
