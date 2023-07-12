@@ -21,6 +21,7 @@ import LeaderBoard from '../pages/LeaderBoard'
 import Simplicity from '../pages/games/simplicity'
 const RouteStacks = () => {
 	const loggedIn = () => {
+		console.log(store.getState())
 		return !isEmpty(AUTH_GETTERS.loginToken(store.getState()))
 	}
 	const loggedOut = () => {

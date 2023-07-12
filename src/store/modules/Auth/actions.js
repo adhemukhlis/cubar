@@ -161,6 +161,12 @@ export default {
 					utoken: ''
 				}
 			})
+			dispatch({
+				type: REDUCER_TYPES.AUTH_LOGIN
+			})
+			dispatch({
+				type: REDUCER_TYPES.USER_USER_DATA
+			})
 			return true
 		}
 	}
