@@ -195,3 +195,4 @@ export const firebaseListInstansi = (callback) =>
 		})
 		callback(tmp)
 	})
+export const playerLeaderBoard = (instansi, uid) => firebaseRefLeaderBoard.child(instansi).child(uid)

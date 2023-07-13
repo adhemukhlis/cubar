@@ -8,7 +8,7 @@ import { LeftOutlined } from '@ant-design/icons'
 const { Text } = Typography
 const Leaderboard = () => {
 	const [isLoading, setIsLoading] = useState(true)
-	const [leaderboardFilter, setLeaderboardFilter] = useState('sdn-4-kalibagor')
+	const [leaderboardFilter, setLeaderboardFilter] = useState('two_times')
 	const [listInstansi, setListInstansi] = useState([])
 	const [listLeaderboard, setListLeaderboard] = useState([])
 
@@ -31,11 +31,12 @@ const Leaderboard = () => {
 		// 	setListLeaderboard(data.map(({ nama, skor }) => ({ nama, skor })))
 		// 	setIsLoading(false)
 		// })
+		firebaseListLeaderboardByInstansi(leaderboardFilter).off()
 		firebaseListLeaderboardByInstansi(leaderboardFilter).on('value', (snap) => {
 			const data = snap.val()
 			const listData = Object.keys(data).map((key) => {
-				const { nama, skor } = data[key]
-				return { id: key, nama, skor }
+				const dataPlayer = data[key]
+				return { id: key, ...dataPlayer }
 			})
 			setListLeaderboard(listData)
 			setIsLoading(false)
@@ -43,8 +44,11 @@ const Leaderboard = () => {
 	}, [leaderboardFilter])
 
 	const listInstansiOptions = listInstansi.map((data, i) => ({ key: i, label: data.name, value: data.key }))
-	const orderedUser = orderBy(listLeaderboard, ['skor', 'skor'], ['asc', 'desc'])
-	const columns = [
+	const orderedUser =
+		leaderboardFilter === 'sdn-4-kalibagor'
+			? orderBy(listLeaderboard, ['skor', 'skor'], ['asc', 'desc'])
+			: orderBy(listLeaderboard, ['jumlah_menang', 'jumlah_menang'], ['desc', 'asc'])
+	const columnsSDKalibagorEmpat = [
 		{
 			title: '#',
 			dataIndex: 'number',
@@ -75,6 +79,44 @@ const Leaderboard = () => {
 			title: 'Performance',
 			dataIndex: 'skor',
 			key: 'skor'
+		}
+	]
+	const columns = [
+		{
+			title: '#',
+			dataIndex: 'number',
+			key: 'number',
+			render: (text) =>
+				text <= 3 ? (
+					<Tag color={['processing', 'warning', 'default'].at(text - 1)}>
+						<b>{text}</b>
+					</Tag>
+				) : (
+					<b>{text}</b>
+				)
+		},
+		{
+			title: 'Player',
+			dataIndex: 'username',
+			key: 'username',
+			render: (value, obj) => {
+				return (
+					<Space>
+						<Avatar size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }} src={obj.imageProfile} />
+						<Text strong>{obj.username}</Text>
+					</Space>
+				)
+			}
+		},
+		{
+			title: 'Bermain',
+			dataIndex: 'jumlah_bermain',
+			key: 'jumlah_bermain'
+		},
+		{
+			title: 'Menang',
+			dataIndex: 'jumlah_menang',
+			key: 'jumlah_menang'
 		}
 	]
 	const onFilterBoardChange = (value) => {
@@ -121,10 +163,10 @@ const Leaderboard = () => {
 				</Row>
 				<Card>
 					<Table
-						columns={columns}
+						columns={leaderboardFilter === 'sdn-4-kalibagor' ? columnsSDKalibagorEmpat : columns}
 						rowKey="number"
 						scroll={{ x: 'max-content' }}
-						dataSource={orderedUser.map(({ nama, skor }, n) => ({ number: n + 1, nama, skor, imageUrl: '' }))}
+						dataSource={orderedUser.map((data, n) => ({ number: n + 1, imageUrl: '', ...data }))}
 						pagination={{ responsive: true }}
 					/>
 				</Card>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix, Select } from 'antd'
+import { Table, Space, Avatar, Modal, Row, Col, Button, Tag, Affix, Select, Typography } from 'antd'
 import { CaretRightOutlined, LeftOutlined, StarOutlined } from '@ant-design/icons'
 import { firebaseRefPlayerOnRoom, firebaseRefRoom, firebaseTimestamp } from '@/src/firebase-instance/firebaseRef'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
@@ -9,9 +9,10 @@ import Countdown from '@/src/components/Countdown'
 import dayjs from 'dayjs'
 import { isEqual } from 'lodash'
 import '@/src/styles/hideSelectionColumnTable.css'
-import { Store_SetJoinRoom, Store_SetUserLeaveRoom } from '@/src/firebase-instance/firebaseActions'
+import { Store_SetJoinRoom, Store_SetUserLeaveRoom, playerLeaderBoard } from '@/src/firebase-instance/firebaseActions'
 import URLS from '../enums/urls'
 import { gameplayDuration } from '../config/config'
+import { yellow } from '../styles/styles'
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
@@ -23,7 +24,9 @@ const modes = [
 	{ value: 'ten_times', label: '10x', with_number: 10 }
 ]
 const totalWaitingDuration = 17
+const { Title } = Typography
 const Room = () => {
+	const [modal, contextHolder] = Modal.useModal()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const store = useStore()
@@ -36,6 +39,8 @@ const Room = () => {
 	const [mode, setMode] = useState(modes[0].value)
 	const [startLoading, setStartLoading] = useState(false)
 	const UID = USER_GETTERS.UID(state)
+	const USERNAME = USER_GETTERS.username(state)
+	const IMAGE_PROFILE = USER_GETTERS.imageProfile(state)
 	const [restTime, setRestTime] = useState(0)
 	const [endOfCountDown, setEndOfCountDown] = useState(undefined)
 	const [countDownTime, setCountDownTime] = useState(undefined)
@@ -79,11 +84,9 @@ const Room = () => {
 				if (res === 'ok') {
 					firebaseRefRoom(id).on('value', (snap) => {
 						if (snap.exists()) {
-							console.log('room data', snap.val())
 							const { players: resPlayers, room_master, ...other } = snap.val()
 							setRoomMasterUID(room_master)
 							if (other.current_timeline === 'game-1') {
-								console.log('reset score to 0')
 								firebaseRefPlayerOnRoom(id, UID).update({
 									salah: 0,
 									benar: 0,
@@ -158,9 +161,7 @@ const Room = () => {
 					countDown = setInterval(() => {
 						const waitTime = (endOfCountDown.diff(dayjs(), 'ms') % 1000) - 1
 						const secondRemaining = endOfCountDown.subtract(waitTime, 'ms').diff(dayjs(), 's')
-						console.log(waitTime)
 						setTimeout(() => {
-							console.log('condown interval', secondRemaining)
 							if (secondRemaining < 1) {
 								if (getDuration() > 0) {
 									setEndOfCountDown(dayjs().add(getDuration(), 'ms'))
@@ -172,15 +173,58 @@ const Room = () => {
 									navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
 								}
 							} else {
-								console.log('countdown', secondRemaining)
 								setCountDownTime(secondRemaining)
 							}
 						}, waitTime)
 					}, 1000)
 				}
 			} else {
+				modal.info({
+					title: null,
+					icon: null,
+					content: (
+						<div
+							style={{
+								width: '100%',
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								flexDirection: 'column'
+							}}>
+							<Title level={4} style={{ color: yellow }}>{`${
+								(players || [{ username: '' }])[0].username
+							} Sang Pemenang!`}</Title>
+							<Avatar
+								size={{ xs: 100, sm: 100, md: 100, lg: 100, xl: 100, xxl: 100 }}
+								src={(players || [{ imageProfile: '' }])[0].imageProfile}
+							/>
+						</div>
+					)
+				})
 				if (UID === roomMasterUID) {
 					firebaseRefRoom(id).update({ game_status: 'waiting', current_timeline: '' })
+				}
+				const myRankPosition = players.findIndex((x) => x.uid === UID)
+
+				if ('mode' in gameData) {
+					playerLeaderBoard(gameData.mode, UID).once('value', (snap) => {
+						if (snap.exists()) {
+							const { jumlah_bermain, jumlah_menang } = snap.val()
+							playerLeaderBoard(gameData.mode, UID).update({
+								jumlah_bermain: jumlah_bermain + 1,
+								username: USERNAME,
+								imageProfile: IMAGE_PROFILE,
+								...(myRankPosition === 0 ? { jumlah_menang: jumlah_menang + 1 } : {})
+							})
+						} else {
+							playerLeaderBoard(gameData.mode, UID).update({
+								jumlah_bermain: 1,
+								username: USERNAME,
+								imageProfile: IMAGE_PROFILE,
+								...(myRankPosition === 0 ? { jumlah_menang: 1 } : {})
+							})
+						}
+					})
 				}
 			}
 		}
@@ -203,23 +247,25 @@ const Room = () => {
 						Leave
 					</Button>
 					<div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end' }}>
-						{UID === roomMasterUID && !(gameData.game_status === 'game_start_countdown' && countDownTime > 0) && (
-							<Space>
-								<Select
-									value={mode}
-									onChange={setMode}
-									placeholder="modes"
-									options={[
-										{ value: 'two_times', label: '2x' },
-										{ value: 'five_times', label: '5x' },
-										{ value: 'ten_times', label: '10x' }
-									]}
-								/>
-								<Button icon={<CaretRightOutlined />} onClick={handleStart} loading={startLoading}>
-									Start
-								</Button>
-							</Space>
-						)}
+						{UID === roomMasterUID &&
+							gameData?.current_timeline === '' &&
+							!(gameData.game_status === 'game_start_countdown' && countDownTime > 0) && (
+								<Space>
+									<Select
+										value={mode}
+										onChange={setMode}
+										placeholder="modes"
+										options={[
+											{ value: 'two_times', label: '2x' },
+											{ value: 'five_times', label: '5x' },
+											{ value: 'ten_times', label: '10x' }
+										]}
+									/>
+									<Button icon={<CaretRightOutlined />} onClick={handleStart} loading={startLoading}>
+										Start
+									</Button>
+								</Space>
+							)}
 						{gameData.game_status === 'game_start_countdown' && countDownTime > 0 && (
 							<Countdown onRest={true} a={countDownTime || 0} b={totalWaitingDuration - 1} />
 						)}
@@ -269,6 +315,7 @@ const Room = () => {
 					selectedRowKeys: [UID]
 				}}
 			/>
+			{contextHolder}
 		</div>
 	)
 }
