@@ -248,7 +248,7 @@ const Room = () => {
 					</Button>
 					<div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end' }}>
 						{UID === roomMasterUID &&
-							gameData?.current_timeline === '' &&
+							!gameData?.current_timeline &&
 							!(gameData.game_status === 'game_start_countdown' && countDownTime > 0) && (
 								<Space>
 									<Select
