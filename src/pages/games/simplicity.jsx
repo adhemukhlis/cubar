@@ -45,7 +45,7 @@ const Simplicity = () => {
 
 	const plusPoint = () => {
 		setBenar((prev) => prev + 1)
-		randValue(5, 0, indexSoal, (value) => {
+		randValue((soal || []).length, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}
@@ -77,7 +77,7 @@ const Simplicity = () => {
 				})
 			}
 		})
-		randValue(5, 0, indexSoal, (value) => {
+		randValue((soal || []).length, 0, indexSoal, (value) => {
 			setIndexSoal(value)
 		})
 	}, [])
