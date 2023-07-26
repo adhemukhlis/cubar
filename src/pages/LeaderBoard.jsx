@@ -27,14 +27,10 @@ const Leaderboard = () => {
 		}
 	}, [])
 	useEffect(() => {
-		// firebaseListLeaderboardByInstansi(leaderboardFilter, (data) => {
-		// 	setListLeaderboard(data.map(({ nama, skor }) => ({ nama, skor })))
-		// 	setIsLoading(false)
-		// })
 		firebaseListLeaderboardByInstansi(leaderboardFilter).off()
 		firebaseListLeaderboardByInstansi(leaderboardFilter).on('value', (snap) => {
 			const data = snap.val()
-			const listData = Object.keys(data).map((key) => {
+			const listData = Object.keys(data ?? {}).map((key) => {
 				const dataPlayer = data[key]
 				return { id: key, ...dataPlayer }
 			})
@@ -128,7 +124,7 @@ const Leaderboard = () => {
 	}
 
 	return isLoading ? (
-		<div style={{ minHeight: '100vh' }}>
+		<div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 			<Loader />
 		</div>
 	) : (

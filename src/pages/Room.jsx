@@ -153,7 +153,6 @@ const Room = () => {
 				if (endOfCountDown === undefined) {
 					const gameStartAt = dayjs(gameData.timeline[gameData.current_timeline].game_start_at)
 					const waitTime = (gameStartAt.diff(dayjs(), 'ms') % 1000) - 1
-					// console.log('waitTime',waitTime)
 					setTimeout(() => {
 						setEndOfCountDown(gameStartAt.subtract(waitTime, 'ms'))
 					}, waitTime)
@@ -221,7 +220,7 @@ const Room = () => {
 								jumlah_bermain: 1,
 								username: USERNAME,
 								imageProfile: IMAGE_PROFILE,
-								...(myRankPosition === 0 ? { jumlah_menang: 1 } : {})
+								...(myRankPosition === 0 ? { jumlah_menang: 1 } : {jumlah_menang: 0})
 							})
 						}
 					})
@@ -230,12 +229,6 @@ const Room = () => {
 		}
 		return () => clearInterval(countDown)
 	}, [endOfCountDown, gameData])
-	// useEffect(() => {
-	// 	console.log('gameData.game_status', gameData.game_status)
-	// 	if (gameData.game_status === 'playing') {
-	// 		navigate(URLS.SIMPLICITY, { state: { roomCode: id } })
-	// 	}
-	// }, [gameData.game_status])
 	const getDuration = () => {
 		return dayjs(gameData.timeline[gameData.current_timeline].game_start_at).diff(dayjs(), 'ms')
 	}

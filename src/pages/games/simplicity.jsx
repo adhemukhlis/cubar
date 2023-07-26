@@ -62,7 +62,7 @@ const Simplicity = () => {
 	useEffect(() => {
 		firebaseRefRoom(location.state.roomCode).once('value', (snap) => {
 			if (snap.exists()) {
-				const { players, room_master, ...other } = snap.val()
+				const { room_master, ...other } = snap.val()
 				setGameData(other)
 				setRoomMasterUID(room_master)
 			} else {
@@ -152,11 +152,7 @@ const Simplicity = () => {
 	const getDuration = () => {
 		return endOfCountDown.diff(dayjs(), 'ms')
 	}
-	// useEffect(() => {
-	// 	if (countDownTime < 1) {
-	// 		navigate(URLS.ROOM.replace(':id', '') + location.state.roomCode, { state: { gameFrom: 'simplicity' } })
-	// 	}
-	// }, [countDownTime])
+
 	return (
 		<div style={ContainerCenterBasic}>
 			{!!countDownTime ? (
